@@ -1,0 +1,8 @@
+node_modules
+.DS_Store
+desktop.ini
+npm-debug.log
+
+.nyc_output
+coverage
+dist

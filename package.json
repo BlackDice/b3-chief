@@ -1,0 +1,71 @@
+{
+  "name": "behavior3-chief",
+  "version": "0.1.0",
+  "description": "Manage and run your behavior trees with persistence",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/BlackDice/behavior3-chief.git"
+  },
+  "main": "main.js",
+  "jsnext:main": "main.mjs",
+  "browser": "main.browser.js",
+  "license": "MIT",
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "node build/build.js",
+    "start": "ava --watch",
+    "test": "ava",
+    "coverage": "nyc ava & nyc report --reporter=html"
+  },
+  "dependencies": {
+    "babel-core": "6.8.0",
+    "babel-plugin-dev-expression": "0.2.1",
+    "babel-plugin-transform-async-to-generator": "6.8.0",
+    "babel-plugin-transform-export-extensions": "6.8.0",
+    "babel-plugin-transform-object-rest-spread": "6.8.0",
+    "babel-plugin-transform-regenerator": "6.8.0",
+    "babel-plugin-transform-runtime": "6.8.0",
+    "babel-polyfill": "6.8.0",
+    "babel-preset-es2015-node": "6.0.1",
+    "babel-register": "6.8.0",
+    "debug": "2.2.0",
+    "enumify": "1.0.4",
+    "invariant": "2.2.1",
+    "lodash.isfunction": "3.0.8",
+    "lodash.isobject": "3.0.2",
+    "lodash.isstring": "4.0.1",
+    "lodash.upperfirst": "4.2.0",
+    "purdy": "2.1.0",
+    "stampit": "3.0.0-rc.2",
+    "uid": "0.0.2",
+    "warning": "github:blackdice/warning"
+  },
+  "devDependencies": {
+    "ava": "0.14.0",
+    "babel-cli": "6.8.0",
+    "babel-eslint": "6.0.4",
+    "babel-preset-es2015-rollup": "1.1.1",
+    "babel-preset-stage-1": "6.5.0",
+    "del": "2.2.0",
+    "eslint": "2.10.1",
+    "eslint-plugin-ava": "2.3.1",
+    "eslint-plugin-babel": "3.2.0",
+    "rollup": "0.26.3",
+    "rollup-plugin-babel": "2.4.0",
+    "rollup-plugin-eslint": "2.0.0",
+    "rollup-plugin-node-resolve": "1.5.0",
+    "rollup-plugin-uglify": "0.3.1"
+  },
+  "ava": {
+    "require": [
+      "./test/_setup.js"
+    ],
+    "babel": "inherit",
+    "source": "src"
+  },
+  "nyc": {
+    "exclude": [
+      "src/behavior3js"
+    ]
+  }
+}
