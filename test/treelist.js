@@ -1,10 +1,11 @@
 import test from 'ava';
 
+import Chief from '../src/Chief';
 import TreeList from '../src/TreeList';
 import Behavior from '../src/Behavior';
 
 test.beforeEach((t) => {
-	t.context.instance = TreeList.create();
+	t.context.instance = Chief.create();
 });
 
 test('createTree() creates a new tree with unique ID', (t) => {

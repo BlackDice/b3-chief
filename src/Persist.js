@@ -1,7 +1,7 @@
 import stampit from 'stampit';
 import { Enum } from 'enumify';
-import isObject from 'lodash.isobject';
-import warning from 'warning';
+import _isObject from 'lodash/isObject';
+// import warning from 'warning';
 
 import Logger from './core/Logger';
 
@@ -27,7 +27,7 @@ function destroy() {
 }
 
 function ensureAdapter(adapter) {
-	if (isObject(adapter)) {
+	if (_isObject(adapter)) {
 		return adapter;
 	}
 	// warning(false, 'Valid adapter object was not found in first argument. No data will be persisted.'); // eslint-disable-line max-len

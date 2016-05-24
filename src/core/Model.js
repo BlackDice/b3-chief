@@ -1,5 +1,5 @@
-import _upperFirst from 'lodash.upperfirst';
-import _isFunction from 'lodash.isfunction';
+import _upperFirst from 'lodash/upperFirst';
+import _isFunction from 'lodash/isFunction';
 import stampit from 'stampit';
 
 import EventEmittable from '../core/EventEmittable';

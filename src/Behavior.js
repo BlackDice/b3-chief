@@ -1,7 +1,7 @@
 import stampit from 'stampit';
-import _isString from 'lodash.isstring';
-import _isObject from 'lodash.isobject';
-import _isFunction from 'lodash.isfunction';
+import _isString from 'lodash/isString';
+import _isObject from 'lodash/isObject';
+import _isFunction from 'lodash/isFunction';
 import invariant from 'invariant';
 
 import { BehaviorTree } from './behavior3js/index.js';

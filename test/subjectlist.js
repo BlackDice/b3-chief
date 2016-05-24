@@ -1,14 +1,14 @@
 import { test } from 'ava';
 
 import Model from '../src/core/Model';
-import SubjectList from '../src/SubjectList';
+import Chief from '../src/Chief';
 
 const TreeModelMock = Model('TreeModelMock')
 	.getter('id', 'test')
 ;
 
 test.beforeEach((t) => {
-	t.context.instance = SubjectList();
+	t.context.instance = Chief.create();
 	t.context.treeModel = TreeModelMock();
 });
 

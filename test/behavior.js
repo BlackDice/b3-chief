@@ -1,13 +1,13 @@
 import { test } from 'ava';
 
-import Behavior from '../src/Behavior';
+import Chief from '../src/Chief';
 
 function CustomNode() {}
 CustomNode.prototype.name = 'Custom';
 CustomNode.prototype.tick = () => {};
 
 test.beforeEach((t) => {
-	t.context.instance = Behavior.create();
+	t.context.instance = Chief.create();
 });
 
 test('registerBehaviorNode() expects constructor function of node', (t) => {
