@@ -2,6 +2,7 @@ import stampit from 'stampit';
 import _isString from 'lodash/isString';
 import _isObject from 'lodash/isObject';
 import _isFunction from 'lodash/isFunction';
+import _values from 'lodash/values';
 import invariant from 'invariant';
 
 import { BehaviorTree } from './behavior3js/index.js';
@@ -15,7 +16,7 @@ import Private from './core/Private';
 const Behavior = stampit({
 	initializers: [initializeNodeMap],
 	methods: {
-		registerBehaviorNode, createBehaviorNode,
+		registerBehaviorNode, createBehaviorNode, listBehaviorNodes,
 		createBehaviorTree,
 	},
 }).compose(Uid);
@@ -26,7 +27,7 @@ function initializeNodeMap() {
 	privates.init(this);
 	privates.set(this, 'nodes', new Map());
 
-	const standardNodes = Object.values(
+	const standardNodes = _values(
 		Object.assign({}, Decorators, Composites, Actions)
 	);
 	standardNodes.forEach(this.registerBehaviorNode, this);
@@ -76,6 +77,14 @@ function createBehaviorNode(nodeName, properties = null) {
 	}
 
 	return behaviorNode;
+}
+
+function listBehaviorNodes() {
+	return Array.from(privates.get(this, 'nodes').values()).map((behaviorNode) => ({
+		name: behaviorNode.prototype.name,
+		category: behaviorNode.prototype.category,
+		parameters: behaviorNode.prototype.parameters,
+	}));
 }
 
 function createBehaviorTree(id) {
