@@ -9,6 +9,7 @@ import rollup from 'rollup';
 import babel from 'rollup-plugin-babel';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import commonJs from 'rollup-plugin-commonjs';
+import uglify from 'rollup-plugin-uglify';
 
 const moduleName = 'chief';
 
@@ -18,21 +19,30 @@ async function execute() {
 
 	await Promise.all([
 		makeBundle(
-			{ format: 'cjs', ext: '.js' },
+			{ format: 'es6', ext: '.mjs',
+				babelPlugins: ['external-helpers'],
+			}
 		),
 		makeBundle(
-			{ format: 'es6', ext: '.mjs' }
+			{ format: 'cjs', ext: '.js',
+				babelPlugins: ['external-helpers'],
+			},
 		),
 		makeBundle(
 			{ format: 'cjs', ext: '.browser.js',
 				babelPresets: ['es2015-rollup'],
-				babelPlugins: ['transform-runtime'],
 			}
 		),
 		makeBundle(
 			{ format: 'umd', ext: '.full.js', moduleId: 'b3chief',
 				babelPresets: ['es2015-rollup'],
-				babelPlugins: ['transform-runtime', 'lodash'],
+				babelPlugins: ['lodash'],
+			}
+		),
+		makeBundle(
+			{ format: 'umd', ext: '.full.min.js', moduleId: 'b3chief', minify: true,
+				babelPresets: ['es2015-rollup'],
+				babelPlugins: ['lodash'],
 			}
 		),
 		writePackage(),
@@ -43,24 +53,34 @@ async function execute() {
 
 async function makeBundle(config) {
 	const isUMD = config.format === 'umd';
+
+	const babelConfig = {
+		babelrc: false,
+		exclude: 'node_modules/**',
+		presets: ['stage-1'].concat(config.babelPresets || []),
+		plugins: config.babelPlugins || [],
+		runtimeHelpers: true,
+	};
+
 	const inputConfig = {
 		entry: 'src/index.js',
 		plugins: [
-			babel({
-				babelrc: false,
-				exclude: 'node_modules/**',
-				presets: ['stage-1'].concat(config.babelPresets || []),
-				plugins: config.babelPlugins || [],
+			babel(babelConfig),
+			nodeResolve({
+				jsnext: true, main: true, browser: isUMD, preferBuiltins: !isUMD,
 			}),
-			nodeResolve({ preferBuiltins: true, browser: isUMD }),
-			commonJs(),
+			commonJs({ ignoreGlobal: true }),
 		],
 	};
 
 	if (isUMD) {
-
+		inputConfig.external = ['babel-polyfill'];
 	} else {
 		inputConfig.external = Object.keys(pkg.dependencies);
+	}
+
+	if (config.minify) {
+		inputConfig.plugins.push(uglify());
 	}
 
 	const outputConfig = {
@@ -68,7 +88,10 @@ async function makeBundle(config) {
 		format: config.format,
 		sourceMap: !config.minify,
 		moduleId: config.moduleId,
-		moduleName,
+		moduleName: config.moduleId || moduleName,
+		globals: {
+			'babel-polyfill': '_babelPolyfill',
+		},
 	};
 
 	const bundle = await rollup.rollup(inputConfig);

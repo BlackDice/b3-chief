@@ -12,7 +12,6 @@ var nodePlugins = {
 		'transform-es2015-shorthand-properties',
 		'transform-es2015-sticky-regex',
 		'transform-es2015-unicode-regex',
-		'transform-runtime',
 	],
 	'<= 6.x': [
 		'transform-object-rest-spread',

@@ -1,5 +1,5 @@
 import stampit from 'stampit';
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 
 const EventEmittable = stampit({
 	initializers: function initEventEmitter() {
