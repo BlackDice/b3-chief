@@ -1,7 +1,17 @@
 import Model, { ModelPrivate } from '../core/Model';
+import invariant from 'invariant';
 import warning from 'warning';
 
-const privates = ModelPrivate.create();
+const privates = ModelPrivate.methods({
+	getChildren(owner, ensure = true) {
+		let children = this.getProperty(owner, 'children');
+		if (children === null && ensure === true) {
+			children = new Set();
+			this.setProperty(owner, 'children', children);
+		}
+		return children;
+	},
+}).create();
 
 const NodeModel = Model('Node', privates)
 	.getter('id')
@@ -13,8 +23,9 @@ const NodeModel = Model('Node', privates)
 	.getter('parent')
 	.getter('behaviorNode')
 	.methods({
-		addChild, removeChild, getChildren,
-		ensureChildren,	getProperties,
+		hasChild, addChild, removeChild,
+		hasChildren, getChildren,
+		getProperties, toString,
 	})
 	.init(initializeNodeModel)
 ;
@@ -28,23 +39,48 @@ function getProperties() {
 }
 
 function getChildren() {
-	const children = privates.getProperty(this, 'children');
+	const children = privates.getChildren(this, false);
 	if (children === null) {
 		return [];
 	}
 	return Array.from(children);
 }
 
+function hasChildren() {
+	const children = privates.getChildren(this, false);
+	return children !== null && children.size > 0;
+}
+
+function hasChild(childNode) {
+	const children = privates.getChildren(this, false);
+	return children !== null && children.has(childNode);
+}
+
 function addChild(childNode) {
-	const children = this.ensureChildren();
+	const children = privates.getChildren(this);
+
+	invariant(!children.has(childNode),
+		'Node %s is child of %s already', childNode, this
+	);
+
+	const parentNode = childNode.getParent();
+	invariant(parentNode === null || parentNode === this,
+		'Trying to add node %s that has parent %s already', childNode, parentNode
+	);
+
 	children.add(childNode);
 	privates.setProperty(childNode, 'parent', this);
 }
 
 function removeChild(childNode) {
-	const children = this.ensureChildren();
+	const children = privates.getChildren(this, false);
+	if (children === null) {
+		return null;
+	}
+
 	warning(children.has(childNode),
-		'Trying to remove child node that is not present on %s node child list', this.getId()
+		'Trying to remove child node %s from %s. Node is child of %s.',
+		childNode, this, childNode.getParent()
 	);
 
 	children.delete(childNode);
@@ -52,13 +88,8 @@ function removeChild(childNode) {
 	return childNode;
 }
 
-function ensureChildren() {
-	let children = privates.getProperty(this, 'children');
-	if (children === null) {
-		children = new Set();
-		privates.setProperty(this, 'children', children);
-	}
-	return children;
+function toString() {
+	return this.getId();
 }
 
 export default NodeModel;
