@@ -10,14 +10,13 @@ const TreeModel = Model('Tree', privates)
 	.property('name', 'New tree')
 	.property('description')
 	.methods({
-		addNode, changeRootNode,
-		listNodes, toString,
+		addNode, removeNode, getNode, listNodes,
+		changeRootNode, toString,
 	})
 	.init(initializeTreeModel, initializeRootNode)
 ;
 
-function initializeTreeModel({ createNode }) {
-	privates.set(this, 'createNode', createNode);
+function initializeTreeModel() {
 	privates.set(this, 'nodes', new Set());
 }
 
@@ -28,27 +27,41 @@ function initializeRootNode({ rootNodeName, rootNodeProperties }) {
 }
 
 function addNode(nodeName, nodeProperties) {
-	const createNode = privates.get(this, 'createNode');
-	const behaviorNode = createNode(nodeName, nodeProperties);
+	const behaviorTree = this.getBehaviorTree();
+	const behaviorNode = behaviorTree.createBehaviorNode(nodeName, nodeProperties);
 	const nodeModel = buildNodeModel(behaviorNode, this.getId());
 	privates.get(this, 'nodes').add(nodeModel);
 	return nodeModel;
 }
 
+function removeNode(nodeModel) {
+	privates.get(this, 'nodes').delete(nodeModel);
+	const parent = nodeModel.getParent();
+	if (parent !== null) {
+		parent.removeChild(nodeModel);
+	}
+}
+
+function getNode(nodeId) {
+	const nodes = privates.get(this, 'nodes');
+	for (const node of nodes) {
+		if (node.getId() === nodeId) {
+			return node;
+		}
+	}
+	return null;
+}
+
 function changeRootNode(nodeName, nodeProperties) {
 	const nodes = privates.get(this, 'nodes');
-	const createNode = privates.get(this, 'createNode');
 
 	const currentRootNode = this.getRootNode();
 	nodes.delete(currentRootNode);
 
-	const behaviorRootNode = createNode(nodeName, nodeProperties);
-	this.getBehaviorTree().root = behaviorRootNode;
+	const newRootNode = this.addNode(nodeName, nodeProperties);
+	this.getBehaviorTree().root = newRootNode.getBehaviorNode();
 
-	const newRootNode = buildNodeModel(behaviorRootNode, this.getId());
-	nodes.add(newRootNode);
 	privates.setProperty(this, 'rootNode', newRootNode);
-
 	return newRootNode;
 }
 

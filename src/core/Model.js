@@ -72,12 +72,17 @@ function setupPropertyAccessor(privates, readonly = false) {
 		}
 
 		function initializePropertyValue(data) {
+			let initValue = defaultValue;
+
 			if (data && data.hasOwnProperty(propertyName)) {
-				privates.setProperty(this, propertyName, data[propertyName]);
+				initValue = data[propertyName];
+
 			} else if (_isFunction(defaultValue)) {
 				const obtainedValue = Reflect.apply(defaultValue, this, [data]);
-				privates.setProperty(this, propertyName, obtainedValue);
+				initValue = obtainedValue;
 			}
+
+			privates.setProperty(this, propertyName, initValue);
 		}
 
 		return this.compose({

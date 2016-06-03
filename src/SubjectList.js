@@ -2,7 +2,6 @@ import stampit from 'stampit';
 import invariant from 'invariant';
 import warning from 'warning';
 
-import Persist, { TYPE as PersistType } from './Persist';
 import Uid from './core/Uid';
 import EventEmittable from './core/EventEmittable';
 import Private from './core/Private';
@@ -15,7 +14,7 @@ const SubjectList = stampit({
 		addSubject, removeSubject,
 		getSubject, listSubjects,
 	},
-}).compose(Uid, EventEmittable, Persist);
+}).compose(Uid, EventEmittable);
 
 const privates = Private.create();
 
@@ -29,13 +28,12 @@ function addSubject(tree) {
 		'The tree model expected for addSubject call for assigning tree to subject.'
 	);
 
-	const subjectId = this.createUid();
+	const subjectId = this.createUid('subject');
 	const subject = SubjectModel({
 		id: subjectId,
 		treeId: tree.getId(),
 	});
 
-	this.persist(PersistType.SUBJECT, subject);
 	privates.get(this, 'subjects').set(subjectId, subject);
 	this.emit('subject.add', subject);
 	return subject;
@@ -51,7 +49,6 @@ function removeSubject(subjectId) {
 		'Trying to remove subject with ID `%s` that no longer exists.', subjectId
 	);
 
-	this.destroy(PersistType.SUBJECT, subjectId);
 	privates.get(this, 'subjects').delete(subjectId);
 	this.emit('subject.remove', subject);
 	return subject;

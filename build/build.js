@@ -1,88 +1,93 @@
-/* eslint-disable */
+/* eslint-disable no-console */
 
-'use strict';
+import pkg from '../package.json';
 
-var fs = require('fs');
-var del = require('del');
-var rollup = require('rollup');
-var babel = require('rollup-plugin-babel');
-var uglify = require('rollup-plugin-uglify');
-var Promise = require('any-promise');
-var pkg = require('../package.json');
+import fs from 'fs-promise';
+import Promise from 'any-promise';
 
-var bundles = [
-	{
-		format: 'cjs', ext: '.js', plugins: [],
-		babelPresets: ['stage-1'], babelPlugins: [
-			'transform-es2015-destructuring',
-			'transform-es2015-function-name',
-			'transform-es2015-parameters',
-		],
-	},
-	{
-		format: 'es6', ext: '.mjs', plugins: [],
-		babelPresets: ['stage-1'], babelPlugins: [
-			'transform-es2015-destructuring',
-			'transform-es2015-function-name',
-			'transform-es2015-parameters',
-		],
-	},
-	{
-		format: 'cjs', ext: '.browser.js', plugins: [],
-		babelPresets: ['es2015-rollup', 'stage-1'], babelPlugins: [],
-	},
-];
+import rollup from 'rollup';
+import babel from 'rollup-plugin-babel';
+import nodeResolve from 'rollup-plugin-node-resolve';
+import commonJs from 'rollup-plugin-commonjs';
 
-var promise = Promise.resolve();
+const moduleName = 'chief';
 
-// Compile source code into a distributable format with Babel and Rollup
-bundles.forEach(function(config) {
-	var inputConfig = {
+async function execute() {
+	await fs.ensureDir('dist').catch(() => true);
+	await fs.emptyDir('dist').catch(() => true);
+
+	await Promise.all([
+		makeBundle(
+			{ format: 'cjs', ext: '.js' },
+		),
+		makeBundle(
+			{ format: 'es6', ext: '.mjs' }
+		),
+		makeBundle(
+			{ format: 'cjs', ext: '.browser.js',
+				babelPresets: ['es2015-rollup'],
+				babelPlugins: ['transform-runtime'],
+			}
+		),
+		makeBundle(
+			{ format: 'umd', ext: '.full.js', moduleId: 'b3chief',
+				babelPresets: ['es2015-rollup'],
+				babelPlugins: ['transform-runtime', 'lodash'],
+			}
+		),
+		writePackage(),
+		fs.copy('LICENSE.txt', 'dist/LICENSE.txt'),
+		fs.copy('README.md', 'dist/README.md'),
+	]);
+}
+
+async function makeBundle(config) {
+	const isUMD = config.format === 'umd';
+	const inputConfig = {
 		entry: 'src/index.js',
-		external: Object.keys(pkg.dependencies),
 		plugins: [
 			babel({
 				babelrc: false,
 				exclude: 'node_modules/**',
-				presets: config.babelPresets,
-				plugins: config.babelPlugins,
-				runtimeHelpers: true,
+				presets: ['stage-1'].concat(config.babelPresets || []),
+				plugins: config.babelPlugins || [],
 			}),
-			require('rollup-plugin-node-resolve')({
-				preferBuiltins: true
-			}),
-			require('rollup-plugin-commonjs')()
-		].concat(config.plugins),
+			nodeResolve({ preferBuiltins: true, browser: isUMD }),
+			commonJs(),
+		],
 	};
 
-	var outputConfig = {
-		dest: 'dist/' + (config.moduleName || 'main') + config.ext,
+	if (isUMD) {
+
+	} else {
+		inputConfig.external = Object.keys(pkg.dependencies);
+	}
+
+	const outputConfig = {
+		dest: `dist/${moduleName}${config.ext}`,
 		format: config.format,
 		sourceMap: !config.minify,
-		moduleName: config.moduleName,
+		moduleId: config.moduleId,
+		moduleName,
 	};
 
-	promise = promise.then(function() {
-		return rollup.rollup(inputConfig);
-	}).then(function(bundle) {
-		return bundle.write(outputConfig);
-	});
-});
+	const bundle = await rollup.rollup(inputConfig);
+	await bundle.write(outputConfig);
+	console.log('created', outputConfig.dest);
+}
 
-// Copy package.json and LICENSE.txt
-promise = promise.then(function() {
+function writePackage() {
 	Reflect.deleteProperty(pkg, 'private');
 	Reflect.deleteProperty(pkg, 'devDependencies');
 	Reflect.deleteProperty(pkg, 'scripts');
-	Reflect.deleteProperty(pkg, 'eslintConfig');
 	Reflect.deleteProperty(pkg, 'babel');
 	Reflect.deleteProperty(pkg, 'ava');
 	Reflect.deleteProperty(pkg, 'nyc');
-	fs.writeFileSync('dist/package.json', JSON.stringify(pkg, null, '  '), 'utf-8');
-	fs.writeFileSync('dist/LICENSE.txt', fs.readFileSync('LICENSE.txt', 'utf-8'), 'utf-8');
-	fs.writeFileSync('dist/README.md', fs.readFileSync('README.md', 'utf-8'), 'utf-8');
-});
+	return fs.writeFile('dist/package.json', JSON.stringify(pkg, null, '  '), 'utf-8');
+}
 
-promise.catch(function(err) {
-	console.error(err.stack); // eslint-disable-line no-console
-});
+console.log('building...');
+
+execute()
+	.then(() => console.log('finished'))
+	.catch((err) => console.log(err.stack || err));

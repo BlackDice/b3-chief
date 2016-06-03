@@ -1,14 +1,3 @@
 {
-	"presets": ["es2015-node", "stage-1"],
-	"plugins": [
-		"transform-runtime",
-		"transform-regenerator",
-		"transform-async-to-generator",
-		"dev-expression",
-	],
-	"env": {
-		"development": {
-			"sourceMaps": "inline"
-		}
-	}
+	"presets": ["./babelconfig.js"]
 }
