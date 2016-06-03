@@ -18,6 +18,7 @@ const Private = stampit()
 		},
 		set(owner, key, value) {
 			this.for(owner).set(key, value);
+			return value;
 		},
 	})
 ;

@@ -27,12 +27,13 @@ test('addChild() sets parent of added child node', (t) => {
 	t.is(node.getParent(), rootNode);
 });
 
-test('removeChild() removes node from children list', (t) => {
+test('removeChild() removes node from children list and returns it', (t) => {
 	const { tree, rootNode } = t.context;
 	const node = tree.addNode('Succeeder');
 	rootNode.addChild(node);
-	rootNode.removeChild(node);
+	const removed = rootNode.removeChild(node);
 	t.is(rootNode.getChildren().length, 0);
+	t.is(removed, node);
 });
 
 test('removeChild() clears parent node from removed child', (t) => {
@@ -41,4 +42,10 @@ test('removeChild() clears parent node from removed child', (t) => {
 	rootNode.addChild(node);
 	rootNode.removeChild(node);
 	t.falsy(node.getParent());
+});
+
+test('getProperties() returns properties specified on behavior node prototype', (t) => {
+	const { tree } = t.context;
+	const node = tree.addNode('Repeater');
+	t.truthy(node.getProperties());
 });

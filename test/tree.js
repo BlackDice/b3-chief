@@ -35,3 +35,14 @@ test('getNode() returns node model by specified ID', (t) => {
 	const actual = tree.getNode(expected.getId());
 	t.is(actual, expected);
 });
+
+test('getNode() returns null for non-existing node', (t) => {
+	const { tree } = t.context;
+	const actual = tree.getNode('unknown');
+	t.is(actual, null);
+});
+
+test('toString() contains ID of the tree', (t) => {
+	const { tree } = t.context;
+	t.true(tree.toString().indexOf(tree.getId()) > 0);
+});

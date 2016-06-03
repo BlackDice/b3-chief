@@ -1,10 +1,12 @@
+/**
+* @module Chief
+ */
 import stampit from 'stampit';
-import _isString from 'lodash/isString';
-import _isObject from 'lodash/isObject';
-import _isFunction from 'lodash/isFunction';
+import { isString, isObject, isFunction } from 'lodash';
 import invariant from 'invariant';
 
-import * as B3 from './behavior3js/index.js';
+import { BehaviorTree, Class as BehaviorClass } from './behavior3js';
+import { Action, Composite, Condition, Decorator } from './behavior3js';
 import * as Decorators from './behavior3js/decorators';
 import * as Composites from './behavior3js/composites';
 import * as Actions from './behavior3js/actions';
@@ -13,78 +15,130 @@ import Uid from './core/Uid';
 import Private from './core/Private';
 
 const Behavior = stampit({
-	initializers: [initializeBehaviorNodeMap],
-	methods: {
-		addBehaviorNode,
-		createBehaviorTree, createBehaviorNode,
-		registerBehaviorNode, listBehaviorNodes,
-	},
+	initializers: [initializeBehaviorNodeMap, initializeBehaviorTree],
+	methods: { listBehaviorNodes },
 }).compose(Uid);
 
 const standardBaseNodes = {
-	'Action': B3.Action,
-	'Composite': B3.Composite,
-	'Condition': B3.Condition,
-	'Decorator': B3.Decorator,
+	Action,
+	Composite,
+	Condition,
+	Decorator,
 };
 
 const privates = Private.create();
-
-/**
- * @private
- */
-function initializeBehaviorNodeMap() {
-	privates.init(this);
-	privates.set(this, 'nodes', new Map());
-
-	const standardNodes = Object.values(
-		Object.assign({}, Decorators, Composites, Actions)
-	);
-	standardNodes.forEach(this.addBehaviorNode, this);
-
-	B3.BehaviorTree.prototype.createBehaviorNode = (...args) => this.createBehaviorNode(...args);
-}
 
 /**
  * @typedef {NodeDescriptor}
  * @type {object}
  * @property {!string} name of node
  * @property {!function} tick handle tick of node
+ * @property {string} base name of node
  */
 
 /**
- * Creates and registers node from given descriptor
- * @param {NodeDescriptor} nodeDescriptor
- * @param {string} [baseNodeName]
- * @return {function} registered behavior node class.
+ * @param {NodeDescriptor[]} [options.nodes] additional nodes to register
  */
-function registerBehaviorNode(nodeDescriptor, baseNodeName = 'Action') {
+function initializeBehaviorNodeMap({ nodes } = {}) {
+	privates.init(this);
 
-	invariant(_isObject(nodeDescriptor),
-		'registerBehaviorNode() expects node descriptor object.'
+	const nodeMap = privates.set(this, 'nodes', new Map());
+	for (const nodeClass of prepareNodes(nodeMap, nodes)) {
+		nodeMap.set(nodeClass.prototype.name, nodeClass);
+	}
+}
+
+function *prepareNodes(nodeMap, nodeDescriptors) {
+	yield *Object.values(Composites);
+	yield *Object.values(Decorators);
+	yield *Object.values(Actions);
+	yield *createNodesFromDescriptors(nodeMap, nodeDescriptors);
+}
+
+function *createNodesFromDescriptors(nodeMap, nodeDescriptors) {
+	if (!nodeDescriptors) {
+		return;
+	}
+
+	invariant(nodeDescriptors[Symbol.iterator],
+		'Specified options.nodes must be an iterable object, eg. array.'
 	);
 
-	const nodeName = nodeDescriptor.name;
+	for (const descriptor of nodeDescriptors) {
+		validateNodeDescriptor(descriptor);
 
-	invariant(_isString(nodeName) && nodeName.length,
-		'registerBehaviorNode() expects descriptor with a unique string name specified.'
+		const baseNodeName = descriptor.base;
+		const baseNodeClass = findBaseNode(baseNodeName, nodeMap);
+
+		invariant(typeof baseNodeClass === 'function',
+			'A node descriptor %s has invalid base node %s specified. ' +
+			'The node is not registered yet nor is built in one.',
+			descriptor.name, baseNodeName
+		);
+
+		yield BehaviorClass(baseNodeClass, descriptor);
+	}
+}
+
+function validateNodeDescriptor(descriptor) {
+	invariant(isObject(descriptor),
+		'A node descriptor must be an object.'
 	);
 
-	invariant(_isFunction(nodeDescriptor.tick),
-		'registerBehaviorNode() expects descriptor with a tick method specified.'
+	const nodeName = descriptor.name;
+
+	invariant(isString(nodeName) && nodeName.length,
+		'A node descriptor must have a name property of non-empty string.'
 	);
 
-	const nodes = privates.get(this, 'nodes');
-	const baseNodeClass = nodes.get(baseNodeName) || standardBaseNodes[baseNodeName];
-
-	invariant(typeof baseNodeClass === 'function',
-		'registerBehaviorNode() expects valid name of base node class. ' +
-		'Specified node `%s` is not registered yet nor is built in one.', baseNodeName
+	invariant(isFunction(descriptor.tick),
+		'A node descriptor %s must have a tick method specified.', nodeName
 	);
+}
 
-	return this.addBehaviorNode(
-		B3.Class(baseNodeClass, nodeDescriptor)
-	);
+function findBaseNode(nodeName, nodeMap) {
+	if (isString(nodeName) && nodeName.length) {
+		return nodeMap.get(nodeName) || standardBaseNodes[nodeName];
+	}
+	return null;
+}
+
+function initializeBehaviorTree() {
+
+	const createBehaviorNode = (nodeName, params = null) => {
+		invariant(isString(nodeName) && nodeName.length,
+			'Called createBehaviorNode() without name of node to create.' +
+			'Name is expected to be a non-empty string.'
+		);
+
+		const nodeClass = privates.get(this, 'nodes').get(nodeName);
+		if (nodeClass === undefined) {
+			return null;
+		}
+
+		const clonedParams = isObject(params) ? { ...params } : {};
+		const behaviorNode = Reflect.construct(nodeClass, [clonedParams]);
+		behaviorNode.id = this.createUid(nodeName);
+
+		return behaviorNode;
+	};
+
+	const BehaviorTreeWithNodes = BehaviorClass(BehaviorTree, {
+		createBehaviorNode,
+	});
+
+	/**
+	 * Create instance of B3.BehaviorTree
+	 * @param {string} [id] optional id to be set on instance
+	 * @return {BehaviorTree}
+	 */
+	this.createBehaviorTree = (id) => {
+		const behaviorTree = new BehaviorTreeWithNodes();
+		if (isString(id) && id.length) {
+			behaviorTree.id = id;
+		}
+		return behaviorTree;
+	};
 }
 
 /**
@@ -98,7 +152,7 @@ function registerBehaviorNode(nodeDescriptor, baseNodeName = 'Action') {
 
 /**
  * Retrieve list of currently registered behavior nodes
- * @return {RegisteredNode[]} [description]
+ * @return {RegisteredNode[]}
  */
 function listBehaviorNodes() {
 	return Array.from(privates.get(this, 'nodes').values()).map((behaviorNode) => ({
@@ -107,63 +161,6 @@ function listBehaviorNodes() {
 		category: behaviorNode.prototype.category,
 		parameters: behaviorNode.prototype.parameters,
 	}));
-}
-
-/**
- * Create instance of B3.BehaviorTree
- * @param {string} [id] optional id to be set on instance
- * @return {BehaviorTree}
- */
-function createBehaviorTree(id) {
-	const behaviorTree = new B3.BehaviorTree();
-	if (_isString(id) && id.length) {
-		behaviorTree.id = id;
-	}
-	return behaviorTree;
-}
-
-/**
- * @private
- */
-function addBehaviorNode(nodeClass) {
-	invariant(_isFunction(nodeClass),
-		'The registerNode() method has to be called with constructor function of node class.'
-	);
-
-	const nodeName = nodeClass.prototype.name;
-	const nodes = privates.get(this, 'nodes');
-
-	invariant(!nodes.has(nodeName),
-		'The name of node has to be unique. There is already node `%s` registered.', nodeName
-	);
-
-	nodes.set(nodeName, nodeClass);
-
-	return nodeClass;
-}
-
-/**
- * @private
- */
-function createBehaviorNode(nodeName, properties = null) {
-	invariant(_isString(nodeName),
-		'Called createBehaviorNode() without name of node to create.' +
-		'Name is expected to be a non-empty string.'
-	);
-
-	const nodeClass = privates.get(this, 'nodes').get(nodeName);
-	if (nodeClass === undefined) {
-		return null;
-	}
-
-	const behaviorNode = Reflect.construct(nodeClass, []);
-	behaviorNode.id = this.createUid(nodeName);
-
-	if (_isObject(properties) && _isObject(behaviorNode.properties)) {
-		Object.assign(behaviorNode.properties, properties);
-	}
-
-	return behaviorNode;
 }
 
 export default Behavior;

@@ -1,5 +1,4 @@
-import _upperFirst from 'lodash/upperFirst';
-import _isFunction from 'lodash/isFunction';
+import { upperFirst, isFunction } from 'lodash';
 import stampit from 'stampit';
 
 import EventEmittable from '../core/EventEmittable';
@@ -29,11 +28,7 @@ function Model(modelName, privates = ModelPrivate.create()) {
 		return Object.assign({}, privates.get(this, 'props'));
 	}
 
-	const properties = {
-		get() {
-			return Object.keys(privates.get(this, 'props'));
-		},
-	};
+	const data = { get: valueOf };
 
 	function toString() {
 		return `model of ${modelName}`;
@@ -46,15 +41,15 @@ function Model(modelName, privates = ModelPrivate.create()) {
 	return stampit.compose(EventEmittable, {
 		initializers: [initializeModelPrivateArea],
 		methods: { getModelName, toString, valueOf },
+		propertyDescriptors: { data },
 		staticProperties: { getter, property },
-		staticPropertyDescriptors: { properties },
 	});
 }
 
 function setupPropertyAccessor(privates, readonly = false) {
 	return function accessProperty(propertyName, defaultValue = null) {
 
-		const methodSuffix = _upperFirst(propertyName);
+		const methodSuffix = upperFirst(propertyName);
 		const methods = {};
 
 		methods[`get${methodSuffix}`] = function getPropertyValue() {
@@ -77,7 +72,7 @@ function setupPropertyAccessor(privates, readonly = false) {
 			if (data && data.hasOwnProperty(propertyName)) {
 				initValue = data[propertyName];
 
-			} else if (_isFunction(defaultValue)) {
+			} else if (isFunction(defaultValue)) {
 				const obtainedValue = Reflect.apply(defaultValue, this, [data]);
 				initValue = obtainedValue;
 			}

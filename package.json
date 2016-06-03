@@ -82,7 +82,10 @@
   },
   "nyc": {
     "exclude": [
-      "src/behavior3js"
+      "test",
+      "src/behavior3js",
+      "babelconfig.js",
+      "babelplugins.js"
     ]
   }
 }

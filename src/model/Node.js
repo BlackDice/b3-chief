@@ -1,4 +1,5 @@
 import Model, { ModelPrivate } from '../core/Model';
+import warning from 'warning';
 
 const privates = ModelPrivate.create();
 
@@ -41,11 +42,14 @@ function addChild(childNode) {
 }
 
 function removeChild(childNode) {
-	const children = privates.getProperty(this, 'children');
-	if (children !== null) {
-		children.delete(childNode);
-		privates.setProperty(childNode, 'parent', null);
-	}
+	const children = this.ensureChildren();
+	warning(children.has(childNode),
+		'Trying to remove child node that is not present on %s node child list', this.getId()
+	);
+
+	children.delete(childNode);
+	privates.setProperty(childNode, 'parent', null);
+	return childNode;
 }
 
 function ensureChildren() {
