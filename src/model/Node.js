@@ -24,7 +24,7 @@ const NodeModel = Model('Node', privates)
 	.getter('behaviorNode')
 	.methods({
 		hasChild, addChild, removeChild,
-		hasChildren, getChildren,
+		hasChildren, getChildren, acceptsChildren,
 		getProperties, toString,
 	})
 	.init(initializeNodeModel)
@@ -56,7 +56,22 @@ function hasChild(childNode) {
 	return children !== null && children.has(childNode);
 }
 
+function acceptsChildren() {
+	const behaviorNode = this.getBehaviorNode();
+	if (behaviorNode.children !== undefined) {
+		return true;
+	}
+	if (behaviorNode.child !== undefined) {
+		return behaviorNode.child === null;
+	}
+	return false;
+}
+
 function addChild(childNode) {
+	invariant(this.acceptsChildren(),
+		'Node %s cannot accept child %s', this, childNode
+	);
+
 	const children = privates.getChildren(this);
 
 	invariant(!children.has(childNode),
@@ -70,6 +85,13 @@ function addChild(childNode) {
 
 	children.add(childNode);
 	privates.setProperty(childNode, 'parent', this);
+
+	const behaviorNode = this.getBehaviorNode();
+	if (behaviorNode.children === undefined) {
+		behaviorNode.child = childNode.getBehaviorNode();
+	} else {
+		behaviorNode.children.push(childNode.getBehaviorNode());
+	}
 }
 
 function removeChild(childNode) {
@@ -85,6 +107,16 @@ function removeChild(childNode) {
 
 	children.delete(childNode);
 	privates.setProperty(childNode, 'parent', null);
+
+	const behaviorNode = this.getBehaviorNode();
+	if (behaviorNode.children === undefined) {
+		behaviorNode.child = null;
+	} else {
+		const childBehaviorNode = childNode.getBehaviorNode();
+		const childIndex = behaviorNode.children.indexOf(childBehaviorNode);
+		behaviorNode.children.splice(childIndex, 1);
+	}
+
 	return childNode;
 }
 

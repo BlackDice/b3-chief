@@ -82,6 +82,33 @@ test('removeChild() returns null if child is not present', (t) => {
 	t.is(rootNode.removeChild(node), null);
 });
 
+test('acceptsChildren() returns false for action nodes', (t) => {
+	const { tree } = t.context;
+	const actionNode = tree.addNode('Runner');
+	t.false(actionNode.acceptsChildren());
+});
+
+test('acceptsChildren() returns true for composite nodes', (t) => {
+	const { rootNode } = t.context;
+	t.true(rootNode.acceptsChildren());
+});
+
+test('acceptsChildren() returns true for decorator node without child', (t) => {
+	const { tree } = t.context;
+	const node = tree.addNode('Inverter');
+	t.true(node.acceptsChildren());
+});
+
+test('acceptsChildren() returns false for decorator node with child', (t) => {
+	const { tree } = t.context;
+	const inverterNode = tree.addNode('Inverter');
+	const goodNode = tree.addNode('Runner');
+	inverterNode.addChild(goodNode);
+	t.false(inverterNode.acceptsChildren());
+	inverterNode.removeChild(goodNode);
+	t.true(inverterNode.acceptsChildren());
+});
+
 test('getProperties() returns properties specified on behavior node prototype', (t) => {
 	const { tree } = t.context;
 	const node = tree.addNode('Repeater');
