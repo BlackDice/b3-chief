@@ -10,14 +10,17 @@ import { Action, Composite, Condition, Decorator } from './behavior3js';
 import * as Decorators from './behavior3js/decorators';
 import * as Composites from './behavior3js/composites';
 import * as Actions from './behavior3js/actions';
+import { SUCCESS, FAILURE, RUNNING, ERROR } from './behavior3js/constants';
 
 import Uid from './core/Uid';
+import Logger from './core/Logger';
 import Private from './core/Private';
 
 const Behavior = stampit({
 	initializers: [initializeBehaviorNodeMap, initializeBehaviorTree],
 	methods: { listBehaviorNodes },
-}).compose(Uid);
+	staticProperties: { status: { SUCCESS, FAILURE, RUNNING, ERROR }},
+}).compose(Uid, Logger);
 
 const standardBaseNodes = {
 	Action,
@@ -26,7 +29,11 @@ const standardBaseNodes = {
 	Decorator,
 };
 
-const privates = Private.create();
+const privates = Private.methods({
+	getNodes(owner) {
+		return this.get(owner, 'nodes');
+	},
+}).create();
 
 /**
  * @typedef {NodeDescriptor}
@@ -111,7 +118,7 @@ function initializeBehaviorTree() {
 			'Name is expected to be a non-empty string.'
 		);
 
-		const nodeClass = privates.get(this, 'nodes').get(nodeName);
+		const nodeClass = privates.getNodes(this).get(nodeName);
 		if (nodeClass === undefined) {
 			return null;
 		}
@@ -137,6 +144,7 @@ function initializeBehaviorTree() {
 		if (isString(id) && id.length) {
 			behaviorTree.id = id;
 		}
+		behaviorTree.debug = (...args) => this.debug('tree', ...args);
 		return behaviorTree;
 	};
 }
@@ -155,7 +163,7 @@ function initializeBehaviorTree() {
  * @return {RegisteredNode[]}
  */
 function listBehaviorNodes() {
-	return Array.from(privates.get(this, 'nodes').values()).map((behaviorNode) => ({
+	return Array.from(privates.getNodes(this).values()).map((behaviorNode) => ({
 		constructor: behaviorNode,
 		name: behaviorNode.prototype.name,
 		category: behaviorNode.prototype.category,

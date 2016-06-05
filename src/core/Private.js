@@ -14,7 +14,8 @@ const Private = stampit()
 			return this.map.get(owner);
 		},
 		get(owner, key) {
-			return this.for(owner).get(key);
+			const ownerMap = this.for(owner);
+			return ownerMap.has(key) ? ownerMap.get(key) : null;
 		},
 		set(owner, key, value) {
 			this.for(owner).set(key, value);

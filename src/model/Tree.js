@@ -1,3 +1,6 @@
+import { isFunction } from 'lodash';
+import invariant from 'invariant';
+
 import Model, { ModelPrivate } from '../core/Model';
 import NodeModel from './Node';
 
@@ -11,7 +14,7 @@ const TreeModel = Model('Tree', privates)
 	.property('description')
 	.methods({
 		addNode, removeNode, getNode, listNodes,
-		changeRootNode, toString,
+		changeRootNode, tick, toString,
 	})
 	.init(initializeTreeModel, initializeRootNode)
 ;
@@ -24,6 +27,26 @@ function initializeRootNode({ rootNodeName, rootNodeProperties }) {
 	if (rootNodeName) {
 		this.changeRootNode(rootNodeName, rootNodeProperties);
 	}
+}
+
+function tick(subject) {
+	invariant(subject,
+		'Method tick() of tree model is expecting subject model.'
+	);
+	invariant(isFunction(subject.getTarget),
+		'Passed subject model is missing getTarget method.'
+	);
+	invariant(isFunction(subject.getBlackboardInterface),
+		'Passed subject model is missing getBlackboardInterface method.'
+	);
+	invariant(subject.getTreeId() === this.getId(),
+		'Trying to tick subject %s with tree %s while it should run tree %s',
+		subject.getId(), this.getId(), subject.getTreeId()
+	);
+
+	this.getBehaviorTree().tick(
+		subject.getTarget(), subject.getBlackboardInterface()
+	);
 }
 
 function addNode(nodeName, nodeProperties) {
@@ -80,7 +103,7 @@ function buildNodeModel(behaviorNode, treeId) {
 }
 
 function toString() {
-	return `${this.getName() || 'Tree'} [${this.getId()}]`;
+	return `${this.getName()} [${this.getId()}]`.trim();
 }
 
 export default TreeModel;

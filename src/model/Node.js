@@ -1,6 +1,7 @@
-import Model, { ModelPrivate } from '../core/Model';
 import invariant from 'invariant';
 import warning from 'warning';
+
+import Model, { ModelPrivate } from '../core/Model';
 
 const privates = ModelPrivate.methods({
 	getChildren(owner, ensure = true) {
@@ -32,6 +33,18 @@ const NodeModel = Model('Node', privates)
 
 function initializeNodeModel({ behaviorNode }) {
 	privates.setProperty(this, 'behaviorNode', behaviorNode);
+
+	let lastStatus = null;
+
+	const behaviorNodeTick = behaviorNode.tick;
+	behaviorNode.tick = (tickObject) => {
+		const status = Reflect.apply(behaviorNodeTick, behaviorNode, [tickObject]);
+		if (status !== lastStatus) {
+			this.emit('status.change', status);
+			lastStatus = status;
+		}
+		return status;
+	};
 }
 
 function getProperties() {
@@ -48,7 +61,7 @@ function getChildren() {
 
 function hasChildren() {
 	const children = privates.getChildren(this, false);
-	return children !== null && children.size > 0;
+	return children !== null && Boolean(children.size);
 }
 
 function hasChild(childNode) {
@@ -114,7 +127,8 @@ function removeChild(childNode) {
 	} else {
 		const childBehaviorNode = childNode.getBehaviorNode();
 		const childIndex = behaviorNode.children.indexOf(childBehaviorNode);
-		behaviorNode.children.splice(childIndex, 1);
+		const spliceOne = 1;
+		behaviorNode.children.splice(childIndex, spliceOne);
 	}
 
 	return childNode;

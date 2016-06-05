@@ -5,15 +5,15 @@ import {Class} from '../b3.functions';
 /**
  * A new Tick object is instantiated every tick by BehaviorTree. It is passed
  * as parameter to the nodes through the tree during the traversal.
- * 
- * The role of the Tick class is to store the instances of tree, debug, 
+ *
+ * The role of the Tick class is to store the instances of tree, debug,
  * target and blackboard. So, all nodes can access these informations.
- * 
- * For internal uses, the Tick also is useful to store the open node after 
- * the tick signal, in order to let `BehaviorTree` to keep track and close 
+ *
+ * For internal uses, the Tick also is useful to store the open node after
+ * the tick signal, in order to let `BehaviorTree` to keep track and close
  * them when necessary.
  *
- * This class also makes a bridge between nodes and the debug, passing the 
+ * This class also makes a bridge between nodes and the debug, passing the
  * node state to the debug if the last is provided.
  *
  * @module b3
@@ -59,9 +59,9 @@ export default Class(null, {
   _openNodes: [],
 
   /**
-   * The number of nodes entered during the tick. Update during the tree 
+   * The number of nodes entered during the tick. Update during the tree
    * traversal.
-   * 
+   *
    * @property {Integer} _nodeCount
    * @protected
    * @readOnly
@@ -95,7 +95,7 @@ export default Class(null, {
     this._nodeCount++;
     this._openNodes.push(node);
 
-    // TODO: call debug here
+    this.debug('Node %s entering...', node.id);
   },
 
   /**
@@ -105,7 +105,7 @@ export default Class(null, {
    * @protected
    **/
   _openNode: function(node) {
-    // TODO: call debug here
+    this.debug('Node %s opening...', node.id);
   },
 
   /**
@@ -115,7 +115,7 @@ export default Class(null, {
    * @protected
    **/
   _tickNode: function(node) {
-    // TODO: call debug here
+    this.debug('Node %s ticking...', node.id);
   },
 
   /**
@@ -125,7 +125,7 @@ export default Class(null, {
    * @protected
    **/
   _closeNode: function(node) {
-    // TODO: call debug here
+    this.debug('Node %s closing...', node.id);
     this._openNodes.pop();
   },
 
@@ -136,6 +136,6 @@ export default Class(null, {
    * @protected
    **/
   _exitNode: function(node) {
-    // TODO: call debug here
+    this.debug('Node %s exiting...', node.id);
   }
 });

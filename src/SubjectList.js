@@ -23,7 +23,7 @@ function initializeData() {
 	privates.set(this, 'subjects', new Map());
 }
 
-function addSubject(tree) {
+function addSubject(tree, target = null) {
 	invariant(tree,
 		'The tree model expected for addSubject call for assigning tree to subject.'
 	);
@@ -32,6 +32,7 @@ function addSubject(tree) {
 	const subject = SubjectModel({
 		id: subjectId,
 		treeId: tree.getId(),
+		target,
 	});
 
 	privates.get(this, 'subjects').set(subjectId, subject);

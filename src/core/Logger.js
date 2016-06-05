@@ -3,7 +3,7 @@ import debug from 'debug';
 
 const Logger = stampit.methods({
 	debug(category, ...args) {
-		debug(`b3:chief:${category}`)(...args);
+		debug(`chief:${category}`)(...args);
 	},
 });
 

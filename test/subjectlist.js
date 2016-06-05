@@ -43,6 +43,13 @@ test('addSubject() emits `subject.add` event with added subject model', (t) => {
 	t.is(actual, subject);
 });
 
+test('addSubject() sets second argument value as target property of subject model', (t) => {
+	const { instance, treeModel } = t.context;
+	const target = {};
+	const subject = instance.addSubject(treeModel, target);
+	t.is(subject.getTarget(), target);
+});
+
 test('getSubject() returns subject by ID', (t) => {
 	const { instance, treeModel } = t.context;
 	const expectedSubject = instance.addSubject(treeModel);
