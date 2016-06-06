@@ -1,8 +1,12 @@
 # Behavior3 Chief
 
-_Manage and run behavior trees for your subjects_
+_Manage and run behavior trees for your subjects in your game_
 
-## What and why ##
+[![npm](https://img.shields.io/npm/v/behavior3-chief.svg?maxAge=2592000)]()
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/BlackDice/b3-chief/master/LICENSE.txt)
+[![Travis](https://img.shields.io/travis/BlackDice/b3-chief.svg?maxAge=2592000)]()
+[![Coverage Status](https://coveralls.io/repos/github/BlackDice/b3-chief/badge.svg?branch=master)](https://coveralls.io/github/BlackDice/b3-chief?branch=master)
+[![David](https://img.shields.io/david/BlackDice/b3-chief.svg?maxAge=2592000)]()
 
 Chief is a simple wrapper around JavaScript library [Behavior3](http://behavior3.com/). Main reason for its creation is to have a unified place for managing behavior trees, nodes and subjects.
 
