@@ -4,6 +4,7 @@
 import stampit from 'stampit';
 import { isString, isObject, isFunction } from 'lodash';
 import invariant from 'invariant';
+import { oneLine } from 'common-tags';
 
 import { BehaviorTree, Class as BehaviorClass } from './behavior3js';
 import { Action, Composite, Condition, Decorator } from './behavior3js';
@@ -77,11 +78,10 @@ function *createNodesFromDescriptors(nodeMap, nodeDescriptors) {
 		const baseNodeName = descriptor.base;
 		const baseNodeClass = findBaseNode(baseNodeName, nodeMap);
 
-		invariant(typeof baseNodeClass === 'function',
-			'A node descriptor %s has invalid base node %s specified. ' +
-			'The node is not registered yet nor is built in one.',
-			descriptor.name, baseNodeName
-		);
+		invariant(typeof baseNodeClass === 'function', oneLine`
+			A node descriptor %s has invalid base node %s specified.
+			The node is not registered yet nor is built in one.
+		`, descriptor.name, baseNodeName);
 
 		yield BehaviorClass(baseNodeClass, descriptor);
 	}
@@ -113,10 +113,10 @@ function findBaseNode(nodeName, nodeMap) {
 function initializeBehaviorTree() {
 
 	const createBehaviorNode = (nodeName, params = null) => {
-		invariant(isString(nodeName) && nodeName.length,
-			'Called createBehaviorNode() without name of node to create.' +
-			'Name is expected to be a non-empty string.'
-		);
+		invariant(isString(nodeName) && nodeName.length, oneLine`
+			Called createBehaviorNode() without name of node to create.
+			Name is expected to be a non-empty string.
+		`);
 
 		const nodeClass = privates.getNodes(this).get(nodeName);
 		if (nodeClass === undefined) {
