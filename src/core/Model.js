@@ -69,19 +69,17 @@ function setupPropertyAccessor(privates, readonly = false) {
 		function initializePropertyValue(data) {
 			let initValue = defaultValue;
 
-			if (data && data.hasOwnProperty(propertyName)) {
-				initValue = data[propertyName];
-
-			} else if (isFunction(defaultValue)) {
+			if (isFunction(defaultValue)) {
 				const obtainedValue = Reflect.apply(defaultValue, this, [data]);
 				initValue = obtainedValue;
+			} else if (data && data.hasOwnProperty(propertyName)) {
+				initValue = data[propertyName];
 			}
 
 			privates.setProperty(this, propertyName, initValue);
 		}
 
 		return this.compose({
-			deepConfiguration: { properties: [propertyName]},
 			methods, initializers: [initializePropertyValue],
 		});
 	};

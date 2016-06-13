@@ -16,13 +16,13 @@ test('property() creates related get & set method', (t) => {
 	t.is(model.getTest(), 'foo');
 });
 
-test('getter() accepts function as second argument used to retrieve value', (t) => {
+test('getter() accepts function as second argument used create initial value', (t) => {
 	const getter = (data) => {
-		t.deepEqual(data, { nottest: 'foo' });
-		return 'bar';
+		t.deepEqual(data, { test: 'foo' });
+		return data.test.toUpperCase();
 	};
-	const model = Model().getter('test', getter).create({ nottest: 'foo' });
-	t.is(model.getTest(), 'bar');
+	const model = Model().getter('test', getter).create({ test: 'foo' });
+	t.is(model.getTest(), 'FOO');
 });
 
 test('model instance `data` property returns immutable model data', (t) => {
