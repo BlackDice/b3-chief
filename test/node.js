@@ -109,20 +109,16 @@ test('acceptsChildren() returns false for decorator node with child', (t) => {
 	t.true(inverterNode.acceptsChildren());
 });
 
-test('emits `status.change` when node is ticked for first time', (t) => {
-	const { instance, tree, rootNode } = t.context;
-	t.plan(1);
-	rootNode.once('status.change', (status) => t.is(status, Chief.status.SUCCESS));
-	tree.tick(instance.addSubject(tree));
-});
-
-test('emits `status.change` when node is ticked and returns different status', (t) => {
+test('emits `status` with returned status whenever node is ticked', (t) => {
 	const { instance, tree, rootNode } = t.context;
 	const subject = instance.addSubject(tree);
-	tree.tick(subject);
-	t.plan(1);
+	t.plan(2);
+
+	rootNode.once('status', (status) => t.is(status, Chief.status.SUCCESS));
+	tree.tick(instance.addSubject(tree));
+
 	rootNode.addChild(tree.addNode('Failer'));
-	rootNode.once('status.change', (status) => {
+	rootNode.once('status', (status) => {
 		t.is(status, Chief.status.FAILURE);
 	});
 	tree.tick(subject);

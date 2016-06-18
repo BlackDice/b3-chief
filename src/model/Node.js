@@ -34,15 +34,10 @@ const NodeModel = Model('Node', privates)
 function initializeNodeModel({ behaviorNode }) {
 	privates.setProperty(this, 'behaviorNode', behaviorNode);
 
-	let lastStatus = null;
-
 	const behaviorNodeTick = behaviorNode.tick;
 	behaviorNode.tick = (tickObject) => {
 		const status = Reflect.apply(behaviorNodeTick, behaviorNode, [tickObject]);
-		if (status !== lastStatus) {
-			this.emit('status.change', status);
-			lastStatus = status;
-		}
+		this.emit('status', status);
 		return status;
 	};
 }
