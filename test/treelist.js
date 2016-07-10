@@ -1,7 +1,6 @@
 import test from 'ava';
 
 import Chief from '../src/Chief';
-import TreeList from '../src/TreeList';
 
 test.beforeEach((t) => {
 	t.context.instance = Chief.create();
@@ -10,70 +9,74 @@ test.beforeEach((t) => {
 test('createTree() creates a new tree with unique ID', (t) => {
 	const { instance } = t.context;
 
-	const firstTree = instance.createTree('Sequence');
+	const firstTree = instance.createTree();
 	t.truthy(firstTree.getId());
 
-	const secondTree = instance.createTree('Sequence');
+	const secondTree = instance.createTree();
 	t.not(firstTree.getId(), secondTree.getId());
 });
 
-test('createTree() sets rootNode property with created node model', (t) => {
+test('createTree() creates a new tree with specified ID', (t) => {
 	const { instance } = t.context;
-	const tree = instance.createTree('Sequence');
-	const rootNode = tree.getRootNode();
-	t.truthy(rootNode);
-	t.is(rootNode.getName(), 'Sequence');
+
+	const tree = instance.createTree('testId');
+	t.is(tree.getId(), 'testId');
 });
 
-test('createTree() passes node properties from second argument to root node', (t) => {
+test('addTree() is expecting a tree model to be passed in first argument', (t) => {
 	const { instance } = t.context;
-	const tree = instance.createTree('Repeater', { maxLoop: 5 });
-	const rootNode = tree.getRootNode();
-	t.is(rootNode.getBehaviorNode().maxLoop, 5);
+	t.throws(() => instance.addTree(), /expecting a tree model/);
 });
 
-test('createTree() emits `tree.create` event with added subject model', (t) => {
+test('addTree() adds created tree to the list', (t) => {
+	const { instance } = t.context;
+	const expectedTree = instance.createTree('Sequence');
+	instance.addTree(expectedTree);
+	t.is(instance.treeCount, 1);
+});
+
+test('addTree() emits `tree.add` event with added tree model', (t) => {
 	const { instance } = t.context;
 	let actual = null;
-	instance.once('tree.create', (tree) => {
+	instance.once('tree.add', (tree) => {
 		actual = tree;
 	});
-	const tree = instance.createTree('Sequence');
+	const tree = instance.createTree();
+	instance.addTree(tree);
 	t.is(actual, tree);
-});
-
-test('createTree() can be called without root node specified', (t) => {
-	const { instance } = t.context;
-	t.notThrows(() => instance.createTree());
-	t.falsy(instance.createTree().getRootNode());
 });
 
 test('getTree() returns tree by ID', (t) => {
 	const { instance } = t.context;
-	const expectedTree = instance.createTree('Sequence');
+	const expectedTree = instance.createTree();
+	instance.addTree(expectedTree);
 	t.is(instance.getTree(expectedTree.getId()), expectedTree);
 	t.is(instance.getTree('non-existing'), null, 'should return null for non-existing tree');
 });
 
-test('listTrees() returns existing and created trees', (t) => {
+test('listTrees() returns all added trees', (t) => {
 	const { instance } = t.context;
 	t.is(instance.listTrees().length, 0);
 
-	const firstTree = instance.createTree('Sequence');
-	t.is(Array.from(instance.listTrees()).length, 1, 'one subject');
+	const firstTree = instance.createTree();
+	instance.addTree(firstTree);
+	t.is(Array.from(instance.listTrees()).length, 1, 'one tree present');
 
-	const secondTree = instance.createTree('Sequence');
+	const secondTree = instance.createTree();
+	instance.addTree(secondTree);
 
 	const trees = Array.from(instance.listTrees());
-	t.is(trees.length, 2, 'two trees');
+	t.is(trees.length, 2, 'two trees present');
 	t.is(trees[0], firstTree);
 	t.is(trees[1], secondTree);
 });
 
 test('removeTree() removes tree by ID and returns it', (t) => {
 	const { instance } = t.context;
-	const firstTree = instance.createTree('Sequence');
-	const secondTree = instance.createTree('Sequence');
+	const firstTree = instance.createTree();
+	instance.addTree(firstTree);
+	const secondTree = instance.createTree();
+	instance.addTree(secondTree);
 	const removedTree = instance.removeTree(firstTree.getId());
 	t.is(removedTree, firstTree);
 
@@ -94,7 +97,17 @@ test('removeTree() emits `tree.remove` event with removed tree model', (t) => {
 	instance.once('tree.remove', (tree) => {
 		actual = tree;
 	});
-	const tree = instance.createTree('Wait');
+	const tree = instance.createTree();
+	instance.addTree(tree);
 	instance.removeTree(tree.getId());
 	t.is(actual, tree);
 });
+
+test('removeTree() disposes tree model', (t) => {
+	const { instance } = t.context;
+	const tree = instance.createTree();
+	instance.addTree(tree);
+	instance.removeTree(tree.getId());
+	t.true(tree.isDisposed);
+});
+

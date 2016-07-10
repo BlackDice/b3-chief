@@ -59,7 +59,7 @@ function setupPropertyAccessor(privates, readonly = false) {
 		function setPropertyValue(newValue) {
 			const oldValue = privates.getProperty(this, propertyName);
 			privates.setProperty(this, propertyName, newValue);
-			this.emit('change', propertyName, newValue, oldValue);
+			this.emit('change', { propertyName, newValue, oldValue });
 		}
 
 		if (readonly !== true) {

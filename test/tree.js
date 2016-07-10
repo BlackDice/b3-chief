@@ -4,35 +4,86 @@ import Chief from '../src/Chief';
 
 test.beforeEach((t) => {
 	t.context.instance = Chief.create();
-	t.context.tree = t.context.instance.createTree('Sequence');
+	t.context.tree = t.context.instance.createTree();
+	t.context.rootNode = t.context.tree.setRootNode(
+		t.context.tree.createNode('Sequence')
+	);
 	t.context.subject = t.context.instance.addSubject(t.context.tree);
 });
 
-test('addNode() creates node mode and appends it to list of nodes', (t) => {
+test('is updatable', (t) => {
 	const { tree } = t.context;
-	const node = tree.addNode('Succeeder');
+	t.is(typeof tree.onUpdate, 'function');
+});
+
+test('createNode() creates node model with specified name', (t) => {
+	const { tree } = t.context;
+	const node = tree.createNode('Succeeder');
+	t.is(node.getName(), 'Succeeder');
+});
+
+test('addNode() appends node model to list of nodes', (t) => {
+	const { tree } = t.context;
+	const node = tree.addNode(tree.createNode('Succeeder'));
 	t.true(tree.listNodes().includes(node));
+});
+
+test('addNode() triggers updatable handlers', (t) => {
+	const { tree } = t.context;
+	t.plan(1);
+	tree.onUpdate((update) => t.is(update.target, tree));
+	tree.addNode(tree.createNode('Succeeder'));
+});
+
+test('addNode() triggers updatable handlers when added node is updated', (t) => {
+	const { tree } = t.context;
+	const node = tree.addNode(tree.createNode('Sequence'));
+	const childNode = tree.addNode(tree.createNode('Failer'));
+	t.plan(2);
+	tree.onUpdate((update) => t.is(update.target, tree));
+	node.addChild(childNode);
+	node.removeChild(childNode);
 });
 
 test('removeNode() removes node from list of nodes', (t) => {
 	const { tree } = t.context;
-	const node = tree.addNode('Runner');
+	const node = tree.addNode(tree.createNode('Runner'));
 	tree.removeNode(node);
 	t.false(tree.listNodes().includes(node));
 });
 
 test('removeNode() removes node from children list of parent node', (t) => {
 	const { tree } = t.context;
-	const node = tree.addNode('Runner');
+	const node = tree.addNode(tree.createNode('Runner'));
 	const rootNode = tree.getRootNode();
 	rootNode.addChild(node);
 	tree.removeNode(node);
 	t.false(rootNode.getChildren().includes(node));
 });
 
+test('removeNode() disposes removed node model', (t) => {
+	const { tree } = t.context;
+	const node = tree.addNode(tree.createNode('Runner'));
+	tree.removeNode(node);
+	t.true(node.isDisposed);
+});
+
+test('removeNode() triggers updatable handlers', (t) => {
+	const { tree } = t.context;
+	const node = tree.addNode(tree.createNode('Runner'));
+	tree.removeNode(node);
+	t.false(tree.listNodes().includes(node));
+});
+
+test('removeNode() is expecting child node to be removed', (t) => {
+	const { tree } = t.context;
+	tree.addNode(tree.createNode('Runner'));
+	t.throws(() => tree.removeNode(), /expecting a node model/);
+});
+
 test('getNode() returns node model by specified ID', (t) => {
 	const { tree } = t.context;
-	const expected = tree.addNode('Succeeder');
+	const expected = tree.addNode(tree.createNode('Succeeder'));
 	const actual = tree.getNode(expected.getId());
 	t.is(actual, expected);
 });
@@ -41,6 +92,32 @@ test('getNode() returns null for non-existing node', (t) => {
 	const { tree } = t.context;
 	const actual = tree.getNode('unknown');
 	t.is(actual, null);
+});
+
+test('setRootNode() is expecting node model to be used as a root', (t) => {
+	const { tree } = t.context;
+	t.throws(() => tree.setRootNode(), /expecting a node model/);
+});
+
+test('setRootNode() does not accept node that already has a parent', (t) => {
+	const { tree, rootNode } = t.context;
+	const node = tree.addNode(tree.createNode('Failer'));
+	rootNode.addChild(node);
+	t.throws(() => tree.setRootNode(node), /it is already a child of/);
+});
+
+test('setRootNode() removes current root node', (t) => {
+	const { tree, rootNode } = t.context;
+	const node = tree.createNode('Succeeder');
+	tree.setRootNode(node);
+	t.not(tree.getRootNode(), rootNode);
+});
+
+test('setRootNode() changes current root node', (t) => {
+	const { tree } = t.context;
+	const node = tree.createNode('Succeeder');
+	tree.setRootNode(node);
+	t.is(tree.getRootNode(), node);
 });
 
 test('tick() is expecting subject model', (t) => {
@@ -54,7 +131,7 @@ test('tick() verifies that correct subject is being ticked', (t) => {
 	const { tree, instance } = t.context;
 	const otherTree = instance.createTree();
 	const subject = instance.addSubject(otherTree);
-	t.throws(() => tree.tick(subject), /it should run tree/)
+	t.throws(() => tree.tick(subject), /it should run tree/);
 });
 
 test('tick() invokes tick method of behaviorTree instance', (t) => {

@@ -6,7 +6,10 @@ import Subject from '../src/model/Subject';
 
 test.beforeEach((t) => {
 	t.context.instance = Chief.create();
-	t.context.treeModel = t.context.instance.createTree('Sequence');
+	t.context.tree = t.context.instance.createTree();
+	t.context.rootNode = t.context.tree.setRootNode(
+		t.context.tree.createNode('Sequence')
+	);
 });
 
 test('has separate memory for each subject', (t) => {
@@ -21,10 +24,10 @@ test('memory can be initialized with data passed to subject', (t) => {
 });
 
 test('tree memory has openNodes array correctly specified in defaults', (t) => {
-	const { treeModel } = t.context;
+	const { tree } = t.context;
 	const subject = Subject.create();
 
-	const treeMemory1 = subject.getMemoryForTree(treeModel);
+	const treeMemory1 = subject.getMemoryForTree(tree);
 	t.is(typeof treeMemory1.get('openNodes'), 'object');
 
 	const treeMemory2 = subject.getMemory().accessTree('someTree');
@@ -37,14 +40,14 @@ test('getMemoryForTree() is expecting tree model', (t) => {
 });
 
 test('getMemoryForTree() returns submemory for specified tree model', (t) => {
-	const { treeModel } = t.context;
+	const { tree } = t.context;
 
 	const subject = Subject.create();
-	const treeMemory = subject.getMemoryForTree(treeModel);
-	t.is(treeMemory, subject.getMemory().accessTree(treeModel.getId()));
+	const treeMemory = subject.getMemoryForTree(tree);
+	t.is(treeMemory, subject.getMemory().accessTree(tree.getId()));
 
 	const secondSubject = Subject.create();
-	const secondTreeMemory = secondSubject.getMemoryForTree(treeModel);
+	const secondTreeMemory = secondSubject.getMemoryForTree(tree);
 	t.not(treeMemory, secondTreeMemory);
 });
 
@@ -54,12 +57,12 @@ test('getMemoryForNode() is expecting node model', (t) => {
 });
 
 test('getMemoryForNode() returns submemory for specified node model within tree', (t) => {
-	const { treeModel } = t.context;
-	const rootNode = treeModel.getRootNode();
+	const { tree } = t.context;
+	const rootNode = tree.getRootNode();
 
 	const subject = Subject.create();
 	const nodeMemory = subject.getMemoryForNode(rootNode);
-	t.is(nodeMemory, subject.getMemory().accessTree(treeModel.getId()).accessNode(rootNode.getId())); // eslint-disable-line max-len
+	t.is(nodeMemory, subject.getMemory().accessTree(tree.getId()).accessNode(rootNode.getId())); // eslint-disable-line max-len
 
 	const secondSubject = Subject.create();
 	const secondNodeMemory = secondSubject.getMemoryForNode(rootNode);
@@ -87,7 +90,7 @@ test('getBlackboardInterface() returns interface with get/set methods for use in
 });
 
 test('toString() contains id of subject', (t) => {
-	const { instance, treeModel } = t.context;
-	const subject = instance.addSubject(treeModel);
+	const { instance, tree } = t.context;
+	const subject = instance.addSubject(tree);
 	t.true(subject.toString().indexOf(subject.getId()) >= 0);
 });

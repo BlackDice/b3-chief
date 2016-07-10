@@ -112,7 +112,7 @@ function findBaseNode(nodeName, nodeMap) {
 
 function initializeBehaviorTree() {
 
-	const createBehaviorNode = (nodeName, params = null) => {
+	const createBehaviorNode = (nodeName, nodeId = this.createUid(nodeName), params = null) => {
 		invariant(isString(nodeName) && nodeName.length, oneLine`
 			Called createBehaviorNode() without name of node to create.
 			Name is expected to be a non-empty string.
@@ -125,7 +125,7 @@ function initializeBehaviorTree() {
 
 		const clonedParams = isObject(params) ? { ...params } : {};
 		const behaviorNode = Reflect.construct(nodeClass, [clonedParams]);
-		behaviorNode.id = this.createUid(nodeName);
+		behaviorNode.id = nodeId;
 
 		return behaviorNode;
 	};

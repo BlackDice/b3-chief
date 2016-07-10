@@ -110,6 +110,18 @@ test('createBehaviorNode() returns instance of behavior node based on name', (t)
 	t.is(actual.name, 'Sequence');
 });
 
+test('createBehaviorNode() generates id of node', (t) => {
+	const tree = Chief().createBehaviorTree();
+	const actual = tree.createBehaviorNode('Sequence');
+	t.truthy(actual.id);
+});
+
+test('createBehaviorNode() uses id from second argument', (t) => {
+	const tree = Chief().createBehaviorTree();
+	const actual = tree.createBehaviorNode('Sequence', 'nodeId');
+	t.is(actual.id, 'nodeId');
+});
+
 test('createBehaviorNode() returns null for non-existing node', (t) => {
 	const tree = Chief().createBehaviorTree();
 	const actual = tree.createBehaviorNode('Unknown');
@@ -123,5 +135,5 @@ test('createBehaviorNode() passes specified node parameters to node instance', (
 		t.deepEqual(params, expected);
 	}}];
 	const tree = Chief({ nodes }).createBehaviorTree();
-	tree.createBehaviorNode('Custom', expected);
+	tree.createBehaviorNode('Custom', undefined, expected);
 });

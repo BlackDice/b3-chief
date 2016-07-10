@@ -1,32 +1,31 @@
 import { isFunction } from 'lodash';
 import invariant from 'invariant';
+import { oneLine } from 'common-tags';
 
 import Model, { ModelPrivate } from '../core/Model';
+import Updateable from '../core/Updateable';
 import NodeModel from './Node';
 
 const privates = ModelPrivate.create();
 
 const TreeModel = Model('Tree', privates)
+	.compose(Updateable)
 	.getter('id')
-	.getter('rootNode')
 	.getter('behaviorTree')
+	.property('rootNode')
 	.property('name', 'New tree')
 	.property('description')
 	.methods({
-		addNode, removeNode, getNode, listNodes,
-		changeRootNode, tick, toString,
+		createNode, addNode, removeNode,
+		setRootNode, getNode, listNodes,
+		tick, toString,
 	})
-	.init(initializeTreeModel, initializeRootNode)
+	.init(initializeTreeModel)
 ;
 
 function initializeTreeModel() {
 	privates.set(this, 'nodes', new Set());
-}
-
-function initializeRootNode({ rootNodeName, rootNodeProperties }) {
-	if (rootNodeName) {
-		this.changeRootNode(rootNodeName, rootNodeProperties);
-	}
+	this.on('change', (change) => this.didUpdate('treeChange', change));
 }
 
 function tick(subject) {
@@ -49,20 +48,43 @@ function tick(subject) {
 	);
 }
 
-function addNode(nodeName, nodeProperties) {
+function createNode(nodeName, nodeProperties, nodeId) {
 	const behaviorTree = this.getBehaviorTree();
-	const behaviorNode = behaviorTree.createBehaviorNode(nodeName, nodeProperties);
-	const nodeModel = buildNodeModel(behaviorNode, this.getId());
+	const behaviorNode = behaviorTree.createBehaviorNode(
+		nodeName, nodeId, nodeProperties
+	);
+	return buildNodeModel(behaviorNode, this.getId());
+}
+
+function addNode(nodeModel) {
+	invariant(nodeModel, oneLine`
+		Method addTree() is expecting a node model. Got '%s'
+	`, nodeModel);
+
+	invariant(nodeModel.isDisposed !== true, oneLine`
+		Cannot add node '%s' that is already disposed.
+	`, nodeModel);
+
 	privates.get(this, 'nodes').add(nodeModel);
+	this.didUpdate('addNode', nodeModel);
+	nodeModel.onUpdate(this.didUpdate);
+
 	return nodeModel;
 }
 
 function removeNode(nodeModel) {
+	invariant(nodeModel, oneLine`
+		Method removeNode() is expecting a node model for removal.
+	`);
+
 	privates.get(this, 'nodes').delete(nodeModel);
 	const parent = nodeModel.getParent();
 	if (parent !== null) {
 		parent.removeChild(nodeModel);
 	}
+
+	this.didUpdate('removeNode', nodeModel);
+	nodeModel.dispose();
 }
 
 function getNode(nodeId) {
@@ -75,17 +97,26 @@ function getNode(nodeId) {
 	return null;
 }
 
-function changeRootNode(nodeName, nodeProperties) {
-	const nodes = privates.get(this, 'nodes');
-
+function setRootNode(rootNodeModel) {
 	const currentRootNode = this.getRootNode();
-	nodes.delete(currentRootNode);
+	if (currentRootNode !== null) {
+		this.removeNode(currentRootNode);
+	}
 
-	const newRootNode = this.addNode(nodeName, nodeProperties);
-	this.getBehaviorTree().root = newRootNode.getBehaviorNode();
+	invariant(rootNodeModel, oneLine`
+		Method setRootNode() is expecting a node model. Got '%s'
+	`, rootNodeModel);
 
-	privates.setProperty(this, 'rootNode', newRootNode);
-	return newRootNode;
+	invariant(rootNodeModel.getParent() === null, oneLine`
+		Trying to use node %s as a root model, but it is already
+		a child of %s node.
+	`, rootNodeModel, rootNodeModel.getParent());
+
+	this.addNode(rootNodeModel);
+	this.getBehaviorTree().root = rootNodeModel.getBehaviorNode();
+
+	privates.setProperty(this, 'rootNode', rootNodeModel);
+	return rootNodeModel;
 }
 
 function listNodes() {

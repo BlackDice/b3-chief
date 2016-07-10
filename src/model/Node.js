@@ -2,6 +2,7 @@ import invariant from 'invariant';
 import warning from 'warning';
 
 import Model, { ModelPrivate } from '../core/Model';
+import Updateable from '../core/Updateable';
 
 const privates = ModelPrivate.methods({
 	getChildren(owner, ensure = true) {
@@ -29,6 +30,7 @@ const NodeModel = Model('Node', privates)
 		getProperties, toString,
 	})
 	.init(initializeNodeModel)
+	.compose(Updateable)
 ;
 
 function initializeNodeModel({ behaviorNode }) {
@@ -40,6 +42,8 @@ function initializeNodeModel({ behaviorNode }) {
 		this.emit('status', status);
 		return status;
 	};
+
+	this.on('change', (change) => this.didUpdate('nodeChange', change));
 }
 
 function getProperties() {
@@ -100,11 +104,13 @@ function addChild(childNode) {
 	} else {
 		behaviorNode.children.push(childNode.getBehaviorNode());
 	}
+
+	this.didUpdate('addChild', childNode);
 }
 
-function removeChild(childNode) {
+function removeChild(childNode = null) {
 	const children = privates.getChildren(this, false);
-	if (children === null) {
+	if (childNode === null || children === null) {
 		return null;
 	}
 
@@ -125,6 +131,8 @@ function removeChild(childNode) {
 		const spliceOne = 1;
 		behaviorNode.children.splice(childIndex, spliceOne);
 	}
+
+	this.didUpdate('removeChild', childNode);
 
 	return childNode;
 }
