@@ -116,6 +116,9 @@ function setRootNode(rootNodeModel) {
 	this.getBehaviorTree().root = rootNodeModel.getBehaviorNode();
 
 	privates.setProperty(this, 'rootNode', rootNodeModel);
+
+	this.didUpdate('setRootNode', rootNodeModel);
+
 	return rootNodeModel;
 }
 

@@ -26,7 +26,7 @@ test('loads stored trees into Chief structures', async (t) => {
 		rootNodeId: 'rootNodeId',
 		nodes: {
 			0: { id: 'rootNodeId', name: 'Sequence' },
-			1: { id: 'childNodeA', name: 'Wait', parameters: { milliseconds: 10 }},
+			1: { id: 'childNodeA', name: 'Wait', properties: { milliseconds: 10 }},
 			2: { id: 'childNodeB', name: 'Succeeder' },
 		},
 		nodeChildren: {
@@ -75,11 +75,17 @@ test('stores serialized tree model and watches for changes', async (t) => {
 	t.truthy(savedTree);
 	t.is(savedTree.id, tree.getId());
 	t.is(savedTree.rootNodeId, rootNode.getId());
+
 	t.is(savedTree.nodes[0].id, rootNode.getId());
 	t.is(savedTree.nodes[1].id, childNode.getId());
-	t.is(savedTree.nodes[0].children[0], childNode.getId());
+
+	t.is(savedTree.nodeChildren[rootNode.getId()][0], childNode.getId());
 
 	tree.setName('TEST');
 	const updatedTree = treeRef.getData();
 	t.is(updatedTree.name, 'TEST');
+
+	const newRootNode = tree.setRootNode(tree.createNode('Sequence'));
+	const treeWithNewNode = treeRef.getData();
+	t.is(treeWithNewNode.rootNodeId, newRootNode.getId());
 });

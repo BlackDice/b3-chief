@@ -32,6 +32,7 @@ function sync() {
 
 			for (const treeModel of treeModels) {
 				this.chief.addTree(treeModel);
+				watchTree(treeModel);
 			}
 
 			return resolve();
@@ -70,16 +71,25 @@ function serializeTree(treeModel) {
 		description: treeModel.getDescription(),
 		rootNodeId: rootNode && rootNode.getId(),
 		nodes: nodes.map(serializeTreeNode),
+		nodeChildren: nodes.reduce(serializeNodeChildren, {}),
 	};
 }
 
 function serializeTreeNode(nodeModel) {
-	const children = nodeModel.getChildren();
 	return {
 		id: nodeModel.getId(),
 		name: nodeModel.getName(),
-		children: children.map((childNode) => childNode.getId()),
+		properties: nodeModel.getProperties(),
 	};
+}
+
+function serializeNodeChildren(result, nodeModel) {
+	const children = nodeModel.getChildren();
+	if (children.length === 0) {
+		return result;
+	}
+	const childrenId = children.map((childNode) => childNode.getId());
+	return { ...result, [nodeModel.getId()]: childrenId };
 }
 
 function deserializeTree({ id, name, description, rootNodeId, nodes, nodeChildren }) {
@@ -95,23 +105,37 @@ function deserializeTree({ id, name, description, rootNodeId, nodes, nodeChildre
 		treeModel.addNode(nodeModel);
 	}
 
-	for (const parentNodeId of Object.keys(nodeChildren)) {
-		const parentNode = treeModel.getNode(parentNodeId);
-		const children = nodeChildren[parentNodeId];
-
-		for (const childId of loopIndexedObject(children)) {
-			const childNode = treeModel.getNode(childId);
-			parentNode.addChild(childNode);
-		}
+	const rootNode = treeModel.getNode(rootNodeId);
+	if (rootNode !== null) {
+		treeModel.setRootNode(rootNode);
 	}
 
-	const rootNode = treeModel.getNode(rootNodeId);
-	treeModel.setRootNode(rootNode);
+	deserializeTreeChildren(treeModel, nodeChildren);
 
 	return treeModel;
 }
 
-function *loopIndexedObject(obj) {
+function deserializeTreeChildren(treeModel, children = null) {
+	if (children === null) {
+		return;
+	}
+
+	for (const parentNodeId of Object.keys(children)) {
+		const parentNode = treeModel.getNode(parentNodeId);
+		const nodeChildren = children[parentNodeId];
+
+		for (const childId of loopIndexedObject(nodeChildren)) {
+			const childNode = treeModel.getNode(childId);
+			parentNode.addChild(childNode);
+		}
+	}
+}
+
+function *loopIndexedObject(obj = null) {
+	if (obj === null) {
+		return;
+	}
+
 	const indices = Object.keys(obj).sort();
 	for (const index of indices) {
 		yield obj[index];
