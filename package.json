@@ -1,7 +1,7 @@
 {
   "name": "behavior3-chief",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Manage and run behavior trees for your subjects in your game",
   "repository": {
     "type": "git",
