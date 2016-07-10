@@ -1,6 +1,5 @@
 import stampit from 'stampit';
 import invariant from 'invariant';
-import { isFunction } from 'lodash';
 import { oneLine } from 'common-tags';
 import Promise from 'any-promise';
 
@@ -10,7 +9,7 @@ const FirebaseAdapter = stampit.compose({
 });
 
 function initializeFirebaseAdapter({ chief, firebaseRef }) {
-	invariant(firebaseRef && isFunction(firebaseRef.onAuth), oneLine`
+	invariant(firebaseRef, oneLine`
 		'The Firebase adapter is expecting firebaseRef specified in options object.'
 	`);
 
@@ -83,8 +82,11 @@ function serializeTreeNode(nodeModel) {
 	};
 }
 
-function deserializeTree({ id, rootNodeId, nodes, nodeChildren }) {
+function deserializeTree({ id, name, description, rootNodeId, nodes, nodeChildren }) {
 	const treeModel = this.chief.createTree(id);
+
+	treeModel.setName(name);
+	treeModel.setDescription(description);
 
 	for (const node of loopIndexedObject(nodes)) {
 		const nodeModel = treeModel.createNode(

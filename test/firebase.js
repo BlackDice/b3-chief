@@ -42,6 +42,8 @@ test('loads stored trees into Chief structures', async (t) => {
 	const loadedTree = instance.getTree('treeId');
 	t.truthy(loadedTree);
 	t.is(loadedTree.getId(), 'treeId');
+	t.is(loadedTree.getName(), 'TEST');
+	t.is(loadedTree.getDescription(), 'Test description');
 
 	const rootNode = loadedTree.getRootNode();
 	t.truthy(rootNode);
