@@ -17,7 +17,13 @@ function initializeFirebaseAdapter({ chief, firebaseRef }) {
 	this.firebaseRef = firebaseRef;
 }
 
+const syncedInstances = new WeakSet();
+
 function sync() {
+
+	invariant(syncedInstances.has(this.chief) === false, oneLine`
+		The Chief %s is already synced with firebase %s
+	`, this.chief.id, this.firebaseRef.toString());
 
 	const treesRef = this.firebaseRef.child('trees');
 
@@ -55,6 +61,8 @@ function sync() {
 	const watchForChanges = () => {
 		this.chief.on('tree.add', watchTree);
 	};
+
+	syncedInstances.add(this.chief);
 
 	return Promise.all([
 		loadTrees(),

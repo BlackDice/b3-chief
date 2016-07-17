@@ -89,3 +89,9 @@ test('stores serialized tree model and watches for changes', async (t) => {
 	const treeWithNewNode = treeRef.getData();
 	t.is(treeWithNewNode.rootNodeId, newRootNode.getId());
 });
+
+test('method sync() can be used only once to initiate synchronization', (t) => {
+	const { adapter } = t.context;
+	adapter.sync();
+	t.throws(() => adapter.sync(), /already synced/);
+});
