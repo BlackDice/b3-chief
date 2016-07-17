@@ -7,9 +7,7 @@ const Disposable = stampit().init(initializeDisposable);
 function initializeDisposable() {
 	let isDisposed = false;
 
-	Reflect.defineProperty(this, 'isDisposed', { get() {
-		return isDisposed;
-	}});
+	Reflect.defineProperty(this, 'isDisposed', { get: () => isDisposed });
 
 	const disposeHandlers = new Set();
 

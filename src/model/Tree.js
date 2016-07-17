@@ -77,14 +77,25 @@ function removeNode(nodeModel) {
 		Method removeNode() is expecting a node model for removal.
 	`);
 
-	privates.get(this, 'nodes').delete(nodeModel);
+	removeNodeFromTree(this, nodeModel);
+	removeNodeFromParent(nodeModel);
+
+	nodeModel.dispose();
+	this.didUpdate('removeNode', nodeModel);
+}
+
+function removeNodeFromTree(treeModel, nodeModel) {
+	privates.get(treeModel, 'nodes').delete(nodeModel);
+	if (treeModel.getRootNode() === nodeModel) {
+		privates.setProperty(treeModel, 'rootNode', null);
+	}
+}
+
+function removeNodeFromParent(nodeModel) {
 	const parent = nodeModel.getParent();
 	if (parent !== null) {
 		parent.removeChild(nodeModel);
 	}
-
-	this.didUpdate('removeNode', nodeModel);
-	nodeModel.dispose();
 }
 
 function getNode(nodeId) {

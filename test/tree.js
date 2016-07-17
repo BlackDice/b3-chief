@@ -81,6 +81,12 @@ test('removeNode() is expecting child node to be removed', (t) => {
 	t.throws(() => tree.removeNode(), /expecting a node model/);
 });
 
+test('removeNode() clears root node of tree if removing same node', (t) => {
+	const { tree, rootNode } = t.context;
+	tree.removeNode(rootNode);
+	t.is(tree.getRootNode(), null);
+});
+
 test('getNode() returns node model by specified ID', (t) => {
 	const { tree } = t.context;
 	const expected = tree.addNode(tree.createNode('Succeeder'));
@@ -106,11 +112,18 @@ test('setRootNode() does not accept node that already has a parent', (t) => {
 	t.throws(() => tree.setRootNode(node), /it is already a child of/);
 });
 
-test('setRootNode() removes current root node', (t) => {
+test('setRootNode() removes current root node if still present', (t) => {
 	const { tree, rootNode } = t.context;
 	const node = tree.createNode('Succeeder');
 	tree.setRootNode(node);
 	t.not(tree.getRootNode(), rootNode);
+});
+
+test('setRootNode() removes current root node unless is disposed already', (t) => {
+	const { tree, rootNode } = t.context;
+	tree.removeNode(rootNode);
+	const node = tree.createNode('Succeeder');
+	t.notThrows(() => tree.setRootNode(node));
 });
 
 test('setRootNode() changes current root node', (t) => {
