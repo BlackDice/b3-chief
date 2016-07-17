@@ -90,6 +90,22 @@ test('stores serialized tree model and watches for changes', async (t) => {
 	t.is(treeWithNewNode.rootNodeId, newRootNode.getId());
 });
 
+test('removed tree is removed from persistence as well', async (t) => {
+	const { adapter, instance, treesRef } = t.context;
+	await adapter.sync();
+
+	const tree = instance.addTree(instance.createTree());
+	instance.removeTree(tree.getId());
+
+	t.plan(1);
+	return new Promise((resolve) => {
+		treesRef.child(tree.getId()).once('value', (snapshot) => {
+			t.false(snapshot.exists());
+			resolve(snapshot);
+		});
+	});
+});
+
 test('method sync() can be used only once to initiate synchronization', (t) => {
 	const { adapter } = t.context;
 	adapter.sync();

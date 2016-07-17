@@ -49,9 +49,14 @@ function sync() {
 		return Promise.resolve();
 	}
 
-	const saveTree = (treeModel) => (
-		treesRef.child(treeModel.getId()).set(serializeTree(treeModel))
-	);
+	function saveTree(treeModel) {
+		const serializedTree = serializeTree(treeModel);
+		treesRef.child(treeModel.getId()).set(serializedTree);
+	}
+
+	function removeTree(treeModel) {
+		treesRef.child(treeModel.getId()).remove();
+	}
 
 	function watchTree(treeModel) {
 		saveTree(treeModel);
@@ -60,6 +65,7 @@ function sync() {
 
 	const watchForChanges = () => {
 		this.chief.on('tree.add', watchTree);
+		this.chief.on('tree.remove', removeTree);
 	};
 
 	syncedInstances.add(this.chief);

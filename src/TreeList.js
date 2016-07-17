@@ -59,7 +59,12 @@ function getTree(treeId) {
 }
 
 function removeTree(treeId) {
+	invariant(typeof treeId === 'string', oneLine`
+		Method removeTree is expecting ID of tree model. Got '%s'
+	`, treeId);
+
 	const tree = this.getTree(treeId);
+
 	warning(tree,
 		'Trying to remove tree with ID `%s` that no longer exists.', treeId
 	);
