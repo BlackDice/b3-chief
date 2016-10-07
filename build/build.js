@@ -1,91 +1,84 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console,import/no-extraneous-dependencies,object-property-newline */
 
-import pkg from '../package.json';
+import fs from 'fs-promise'
+import Promise from 'any-promise'
 
-import fs from 'fs-promise';
-import Promise from 'any-promise';
+import { rollup } from 'rollup'
+import babel from 'rollup-plugin-babel'
+import nodeResolve from 'rollup-plugin-node-resolve'
+import commonJs from 'rollup-plugin-commonjs'
+import uglify from 'rollup-plugin-uglify'
+import replace from 'rollup-plugin-replace'
 
-import rollup from 'rollup';
-import babel from 'rollup-plugin-babel';
-import nodeResolve from 'rollup-plugin-node-resolve';
-import commonJs from 'rollup-plugin-commonjs';
-import uglify from 'rollup-plugin-uglify';
+import pkg from '../package.json'
 
-const moduleName = 'chief';
+const moduleName = 'chief'
 
 const babelConfig = {
 	babelrc: false,
 	exclude: 'node_modules/**',
-	presets: ['stage-1'],
-	plugins: ['dev-expression'],
-	runtimeHelpers: true,
-};
+	presets: [['es2015', { modules: false }], 'stage-1'],
+	plugins: [
+		'dev-expression',
+		'external-helpers',
+		'transform-flow-strip-types',
+	],
+}
 
-async function execute() {
-	await fs.ensureDir('dist').catch(() => true);
-	await fs.emptyDir('dist').catch(() => true);
-
-	await Promise.all([
+function execute() {
+	return fs.ensureDir('dist').catch(Boolean)
+	.then(() => fs.emptyDir('dist').catch(Boolean))
+	.then(() => Promise.all([
 		makeBundle(
-			{ format: 'es6', ext: '.mjs', package: 'jsnext:main',
-				babelPlugins: ['external-helpers'],
-			}
+			{ format: 'es', ext: '.mjs', package: 'jsnext:main' }
 		),
 		makeBundle(
-			{ format: 'cjs', ext: '.js', package: 'main',
-				babelPlugins: ['external-helpers'],
-			},
+			{ format: 'cjs', ext: '.js', package: 'main' },
 		),
 		makeBundle(
-			{ format: 'cjs', ext: '.browser.js', package: 'browser',
-				babelPresets: ['es2015-rollup'],
-			}
+			{ format: 'umd', ext: '.umd.js', package: 'browser', moduleId: 'b3chief' }
 		),
 		makeBundle(
-			{ format: 'umd', ext: '.full.js', moduleId: 'b3chief',
-				babelPresets: ['es2015-rollup'],
-				babelPlugins: ['lodash'],
-			}
-		),
-		makeBundle(
-			{ format: 'umd', ext: '.full.min.js', moduleId: 'b3chief', minify: true,
-				babelPresets: ['es2015-rollup'],
-				babelPlugins: ['lodash'],
-			}
+			{ format: 'umd', ext: '.umd.min.js', moduleId: 'b3chief', minify: true	}
 		),
 		fs.copy('LICENSE.txt', 'dist/LICENSE.txt'),
 		fs.copy('README.md', 'dist/README.md'),
-	]).then(writePackage);
+	]).then(writePackage))
 }
 
-async function makeBundle(config) {
-	const isUMD = config.format === 'umd';
+function makeBundle(config) {
+	const isUMD = config.format === 'umd'
 
-	const localBabelConfig = {
+	const finalBabelConfig = {
 		...babelConfig,
 		presets: babelConfig.presets.concat(config.babelPresets || []),
 		plugins: babelConfig.plugins.concat(config.babelPlugins || []),
-	};
+	}
 
 	const inputConfig = {
 		entry: 'src/index.js',
 		plugins: [
-			babel(localBabelConfig),
+			babel(finalBabelConfig),
 			nodeResolve({
-				jsnext: true, main: true, browser: isUMD, preferBuiltins: !isUMD,
+				browser: isUMD, preferBuiltins: !isUMD,
 			}),
-			commonJs({ ignoreGlobal: true }),
+			commonJs({ include: 'node_modules/**', ignoreGlobal: true }),
 		],
-	};
+	}
 
 	if (isUMD) {
-		inputConfig.external = ['babel-polyfill'];
+		inputConfig.plugins.push(replace({
+			'process.env.NODE_ENV': JSON.stringify('production'),
+		}))
 	} else {
-		inputConfig.external = Object.keys(pkg.dependencies);
+		inputConfig.external = [].concat(
+			Object.keys(pkg.dependencies),
+			Object.keys(pkg.optionalDependencies),
+		)
 	}
 
 	if (config.minify) {
-		inputConfig.plugins.push(uglify());
+		inputConfig.plugins.push(uglify())
 	}
 
 	const outputConfig = {
@@ -94,39 +87,38 @@ async function makeBundle(config) {
 		sourceMap: !config.minify,
 		moduleId: config.moduleId,
 		moduleName: config.moduleId || moduleName,
-		globals: {
-			'babel-polyfill': '_babelPolyfill',
-		},
-	};
-
-	const bundle = await rollup.rollup(inputConfig);
-	await bundle.write(outputConfig);
-	console.log('created', outputConfig.dest);
-
-	if (config.package) {
-		return { [config.package]: `${moduleName}${config.ext}` };
 	}
 
-	return null;
+	return rollup(inputConfig).then((bundle) => {
+		bundle.write(outputConfig)
+
+		console.log('created', outputConfig.dest)
+
+		if (config.package) {
+			return { [config.package]: `${moduleName}${config.ext}` }
+		}
+
+		return null
+	})
 }
 
 function writePackage(mainfiles) {
-	Reflect.deleteProperty(pkg, 'private');
-	Reflect.deleteProperty(pkg, 'devDependencies');
-	Reflect.deleteProperty(pkg, 'scripts');
-	Reflect.deleteProperty(pkg, 'babel');
-	Reflect.deleteProperty(pkg, 'ava');
-	Reflect.deleteProperty(pkg, 'nyc');
+	Reflect.deleteProperty(pkg, 'private')
+	Reflect.deleteProperty(pkg, 'devDependencies')
+	Reflect.deleteProperty(pkg, 'scripts')
+	Reflect.deleteProperty(pkg, 'babel')
+	Reflect.deleteProperty(pkg, 'ava')
+	Reflect.deleteProperty(pkg, 'nyc')
 	for (const mainfile of mainfiles) {
 		if (mainfile !== null) {
-			Object.assign(pkg, mainfile);
+			Object.assign(pkg, mainfile)
 		}
 	}
-	return fs.writeFile('dist/package.json', JSON.stringify(pkg, null, '  '), 'utf-8');
+	return fs.writeFile('dist/package.json', JSON.stringify(pkg, null, '  '), 'utf-8')
 }
 
-console.log('building...');
+console.log('building...')
 
 execute()
 	.then(() => console.log('finished'))
-	.catch((err) => console.log(err.stack || err));
+	.catch((err) => console.log(err.stack || err))

@@ -1,20 +1,24 @@
-import stampit from 'stampit';
+import { compose } from 'stampit'
 
-import TreeList from './TreeList';
-import SubjectList from './SubjectList';
-import Runner from './Runner';
-import Uid from './core/Uid';
+import BehaviorList from './BehaviorList'
+import SubjectList from './SubjectList'
+import TreeList from './TreeList'
+import Execution from './Execution'
+import Uid from './core/Uid'
 
-import adapter from './adapter';
+import * as constants from './const'
 
-const Chief = stampit
-	.compose(
-		TreeList, SubjectList, Runner, Uid
-	)
-	.statics({ adapter })
-	.init(function initializeChief() {
-		Reflect.defineProperty(this, 'id', { value: this.createUid() });
-	})
-;
+import adapter from './adapter'
 
-export default Chief;
+const Chief = compose(
+	BehaviorList, SubjectList, TreeList, Execution, Uid, {
+		init: initializeChief,
+		statics: { ...constants, adapter },
+	}
+)
+
+function initializeChief() {
+	Reflect.defineProperty(this, 'id', { value: this.createUid() })
+}
+
+export default Chief

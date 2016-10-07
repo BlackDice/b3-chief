@@ -1,73 +1,107 @@
-import stampit from 'stampit';
-import invariant from 'invariant';
-import warning from 'warning';
+import { compose } from 'stampit'
+import invariant from 'invariant'
+import warning from 'warning'
+import { oneLine } from 'common-tags'
 
-import Uid from './core/Uid';
-import EventEmittable from './core/EventEmittable';
-import Private from './core/Private';
+import Store from './Store'
+import setupModelList from './core/ModelList'
+import setupSubjectModel from './SubjectModel'
 
-import SubjectModel from './model/Subject';
+const SubjectList = compose(
+	Store, {
+		init: initializeSubjectList,
+		methods: {
+			addSubject,
+			createSubject,
+			destroySubject,
+			hasSubject,
+			getSubject,
+			listSubjects,
+		},
+	}
+)
 
-const SubjectList = stampit({
-	initializers: initializeData,
-	methods: {
-		addSubject, removeSubject,
-		getSubject, listSubjects,
-	},
-}).compose(Uid, EventEmittable);
+const bList = Symbol('list of subjects')
 
-const privates = Private.create();
-
-function initializeData() {
-	privates.init(this);
-	privates.set(this, 'subjects', new Map());
+function initializeSubjectList() {
+	this[bList] = setupModelList(
+		setupSubjectModel(this.store),
+		this.store.select(this.store.selectors.subjects),
+	)
+	this[bList].attachCountProperty(this, 'subjectCount')
 }
 
-function addSubject(tree, target = null) {
-	invariant(tree,
-		'The tree model expected for addSubject call for assigning tree to subject.'
-	);
-
-	const subjectId = this.createUid('subject');
-	const subject = SubjectModel({
-		id: subjectId,
-		treeId: tree.getId(),
-		target,
-	});
-
-	privates.get(this, 'subjects').set(subjectId, subject);
-	this.emit('subject.add', subject);
-	return subject;
+/**
+ * Adds a new subject to state.
+ * The id will be auto generated if not specified.
+ * @param {Subject} subject
+ * @return {SubjectModel}
+ */
+function addSubject(subject) {
+	return this[bList].create(subject)
 }
 
+/**
+ * Creates and adds new subject to the list.
+ * @param {Identity} treeId override ID of subject instead of random one
+ * @param {SubjectTarget} target optional target of the subject
+ */
+function createSubject(treeId, target = null) {
+	const treeModel = this.getTree(treeId)
+	invariant(treeModel, oneLine`
+		Method createSubject is expecting tree to be executed.
+	`)
+
+	return this.addSubject({
+		treeId: treeModel.getId(), target,
+	})
+}
+
+/**
+ * Removes subject by specified ID from the list
+ * @param {Identity} subjectId
+ */
+function destroySubject(subjectId) {
+	const subjectModel = this.getSubject(subjectId)
+
+	if (subjectModel === null) {
+		warning(false, oneLine`
+			Trying to destroy subject with id %s that doesn't exists.
+		`, subjectModel.getId())
+	} else {
+		subjectModel.destroy()
+	}
+}
+
+/**
+ * Checks if subject by specified ID is present in the list
+ * @param  {Identity} subjectId
+ * @return {Boolean}
+ */
+function hasSubject(subjectId) {
+	return this[bList].has(subjectId)
+}
+
+/**
+ * Returns subject by its ID or null if it doesn't exist
+ * @param  {Identity} subjectId
+ * @return {SubjectModel}
+ */
 function getSubject(subjectId) {
-	return privates.get(this, 'subjects').get(subjectId) || null;
+	return this[bList].get(subjectId)
 }
 
-function removeSubject(subjectId) {
-	const subject = privates.get(this, 'subjects').get(subjectId);
-	warning(subject,
-		'Trying to remove subject with ID `%s` that no longer exists.', subjectId
-	);
-
-	privates.get(this, 'subjects').delete(subjectId);
-	this.emit('subject.remove', subject);
-	return subject;
-}
-
-function listSubjects(tree = null) {
-	const subjects = privates.get(this, 'subjects');
+/**
+ * Returns list of all subjects or optionally filtered by specified tree.
+ * @param {Identity} tree
+ * @return {SubjectModel[]}
+ */
+function listSubjects(treeId = null) {
+	const tree = this.getTree(treeId)
 	if (tree === null) {
-		return Array.from(subjects.values());
+		return this[bList].getAll()
 	}
-	const treeId = tree.getId();
-	const result = [];
-	for (const subject of subjects.values()) {
-		if (subject.getTreeId() === treeId) {
-			result.push(subject);
-		}
-	}
-	return result;
+	return this[bList].filter(tree.getId(), 'treeId')
 }
 
-export default SubjectList;
+export default SubjectList

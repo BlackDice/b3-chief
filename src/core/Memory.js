@@ -1,127 +1,132 @@
-import stampit from 'stampit';
-import invariant from 'invariant';
-import warning from 'warning';
-import { oneLine } from 'common-tags';
-import { upperFirst, isString, isObject, isFunction } from 'lodash';
+import { compose } from 'stampit'
+import invariant from 'invariant'
+import warning from 'warning'
+import { oneLine } from 'common-tags'
+import upperFirst from 'lodash.upperfirst'
+import isString from 'tcomb/lib/isString'
+import isFunction from 'tcomb/lib/isFunction'
+import isObject from 'tcomb/lib/isObject'
 
-import EventEmittable from './EventEmittable';
+import { hasOwnProperty } from './Object'
+import EventEmittable from './EventEmittable'
 
-const Memory = stampit
-	.init(initializeMemory, initializeSubmemories)
-	.deepConf({ defaults: {}, submemories: {}})
-	.statics({ withSubmemory, withDefaults })
-	.compose(EventEmittable)
-;
+const Memory = compose(
+	EventEmittable, {
+		init: [initializeMemory, initializeSubmemories],
+		deepConf: { defaults: {}, submemories: {}},
+		statics: { withSubmemory, withDefaults },
+	},
+)
 
 function withSubmemory(name, submemory) {
-	return this.deepConf({ submemories: { [name]: submemory }});
+	return this.deepConf({ submemories: { [name]: submemory }})
 }
 
 function withDefaults(defaults) {
-	return this.deepConf({ defaults });
+	return this.deepConf({ defaults })
 }
 
 function initializeMemory(data, { stamp }) {
-	const { defaults } = stamp.compose.deepConfiguration;
+	const { defaults } = stamp.compose.deepConfiguration
 
-	let memoryMap = {};
+	let memoryMap = {}
 
 	this.get = (key) => {
 		invariant(isString(key) && key.length,
 			'The get() method of memory is expecting string key to be specified.'
-		);
+		)
 
-		if (memoryMap.hasOwnProperty(key)) {
-			return memoryMap[key];
+		if (hasOwnProperty(memoryMap, key)) {
+			return memoryMap[key]
 		}
 
-		if (data.hasOwnProperty(key)) {
-			return data[key];
+		if (hasOwnProperty(data, key)) {
+			return data[key]
 		}
 
-		if (defaults.hasOwnProperty(key)) {
-			const defaultValue = defaults[key];
+		if (hasOwnProperty(defaults, key)) {
+			const defaultValue = defaults[key]
 
 			if (isFunction(defaultValue)) {
-				const value = Reflect.apply(defaultValue, this, [key]);
+				const value = Reflect.apply(defaultValue, this, [key])
 
 				// value is stored to map so same value can be retrieved on next get() call
-				memoryMap[key] = value;
-				return value;
+				memoryMap[key] = value
+				return value
 			}
 
 			warning(!isObject(defaultValue), oneLine`
 				Default value specified for key '%s' is an object and would used by reference.
 				Use function that returns new object for each memory to solve this.
 				Specified value of type '%s'
-			`, key, typeof defaultValue);
+			`, key, typeof defaultValue)
 
-			return defaultValue;
+			return defaultValue
 		}
-		return null;
-	};
+		return null
+	}
 
 	this.set = (key, value) => {
-		const previousValue = memoryMap[key];
-		memoryMap[key] = value;
-		this.emit('change', { key, value, previousValue });
-	};
+		const previousValue = memoryMap[key]
+		memoryMap[key] = value
+		this.emit('change', { key, value, previousValue })
+	}
 
 	this.forget = () => {
-		this.emit('forget');
-		memoryMap = {};
-	};
+		this.emit('forget')
+		memoryMap = {}
+	}
 
-	this.dump = () => ({ ...data, ...memoryMap });
+	this.dump = () => ({ ...data, ...memoryMap })
 }
 
 function initializeSubmemories(data, { stamp }) {
-	const { submemories } = stamp.compose.deepConfiguration;
+	const { submemories } = stamp.compose.deepConfiguration
 
 	const attachSubmemory = (name, submemoryFactory) => {
-		let submemoryMap = {};
+		let submemoryMap = {}
 
 		const createSubmemory = (identifier) => {
-			const createdSubmemory = submemoryFactory();
-			submemoryMap[identifier] = createdSubmemory;
-			return createdSubmemory;
-		};
+			const createdSubmemory = submemoryFactory()
+			submemoryMap[identifier] = createdSubmemory
+			return createdSubmemory
+		}
 
 		const accessSubmemory = (identifier) => {
 			invariant(isString(identifier) && identifier.length, oneLine`
 				Accessing submemory '%s' requires string identifier specified.
-			`, name);
+			`, name)
 
-			const submemory = submemoryMap[identifier];
+			const submemory = submemoryMap[identifier]
 			if (submemory === undefined) {
-				return createSubmemory(identifier);
+				return createSubmemory(identifier)
 			}
-			return submemory;
-		};
+			return submemory
+		}
 
-		const listSubmemory = () => Object.keys(submemoryMap);
+		const listSubmemory = () => Object.keys(submemoryMap)
 
 		const forgetSubmemory = () => {
 			for (const identifier of listSubmemory()) {
-				const submemory = submemoryMap[identifier];
+				const submemory = submemoryMap[identifier]
 				if (submemory !== undefined) {
-					submemory.forget();
+					submemory.forget()
 				}
 			}
-			submemoryMap = {};
-		};
+			submemoryMap = {}
+		}
 
-		const upperName = upperFirst(name);
-		this[`access${upperName}`] = accessSubmemory;
-		this[`list${upperName}`] = listSubmemory;
-		this[`forget${upperName}`] = forgetSubmemory;
-		this.on('forget', forgetSubmemory);
-	};
+		const upperName = upperFirst(name)
+		this[`access${upperName}`] = accessSubmemory
+		this[`list${upperName}`] = listSubmemory
+		this[`forget${upperName}`] = forgetSubmemory
+		this.on('forget', forgetSubmemory)
+	}
 
 	for (const name of Object.keys(submemories)) {
-		attachSubmemory(name, submemories[name]);
+		attachSubmemory(name, submemories[name])
 	}
 }
 
-export default Memory;
+export default Memory
 

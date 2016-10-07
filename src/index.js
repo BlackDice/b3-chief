@@ -1,2 +1,3 @@
-import 'babel-polyfill';
-export default from './Chief';
+import Chief from './Chief'
+
+export default Chief

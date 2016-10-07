@@ -1,31 +1,30 @@
-import stampit from 'stampit';
+import stampit from 'stampit'
 
-import Disposable from './Disposable';
+import Disposable from './Disposable'
 
 const Updatable = stampit()
 	.compose(Disposable)
 	.init(initializeUpdatable)
-;
+
 
 function initializeUpdatable() {
-
-	const updateHandlers = new Set();
+	const updateHandlers = new Set()
 
 	this.didUpdate = (type, payload) => {
-		const update = { type, payload, target: this };
+		const update = { type, payload, target: this }
 		updateHandlers.forEach((handler) => {
-			Reflect.apply(handler, this, [update]);
-		});
-	};
+			Reflect.apply(handler, this, [update])
+		})
+	}
 
 	this.onUpdate = (fn) => {
-		updateHandlers.add(fn);
-		return () => updateHandlers.delete(fn);
-	};
+		updateHandlers.add(fn)
+		return () => updateHandlers.delete(fn)
+	}
 
 	this.onDispose(() => {
-		updateHandlers.clear();
-	});
+		updateHandlers.clear()
+	})
 }
 
-export default Updatable;
+export default Updatable

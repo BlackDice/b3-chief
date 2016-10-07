@@ -1,88 +1,128 @@
-import { upperFirst, isFunction } from 'lodash';
-import stampit from 'stampit';
+import { compose, methods } from 'stampit'
+import invariant from 'invariant'
+import { oneLine } from 'common-tags'
+import upperFirst from 'lodash.upperfirst'
+import isFunction from 'tcomb/lib/isFunction'
+import { hasOwnProperty } from './Object'
 
-import EventEmittable from '../core/EventEmittable';
-import Private from '../core/Private';
+const identityProperty = 'id'
 
-export const ModelPrivate = Private.methods({
-	getProperty(owner, propertyName) {
-		return this.get(owner, 'props')[propertyName];
+const DefaultAdapter = methods({
+	set() {
+		throw new Error(`No setter has been defined for model ${this.getModelName()}`)
 	},
-	setProperty(owner, propertyName, propertyValue) {
-		const props = this.get(owner, 'props');
-		props[propertyName] = propertyValue;
-	},
-});
+}).conf({
+	readonly: [identityProperty],
+})
 
-function Model(modelName, privates = ModelPrivate.create()) {
+function Model(ModelType, Adapter) {
+	const ModelAdapter = methods({
+		get(property, dataSource) {
+			const modelData = dataSource()
 
-	function initializeModelPrivateArea() {
-		privates.init(this);
-		privates.set(this, 'props', {});
-	}
+			invariant(modelData !== undefined, oneLine`
+				No data retrieved for %s. It might have been already removed from the state.
+			`, this.identity)
+			ModelType(modelData)
 
-	const getter = setupPropertyAccessor(privates, true);
-	const property = setupPropertyAccessor(privates);
+			return hasOwnProperty(modelData, property) ? modelData[property] : null
+		},
+	}).compose(DefaultAdapter, Adapter)
 
-	function valueOf() {
-		return Object.assign({}, privates.get(this, 'props'));
-	}
+	const { props } = ModelType.meta
+	const { readonly } = ModelAdapter.compose.configuration
+	const adapter = ModelAdapter.create()
 
-	const data = { get: valueOf };
+	const modelMethods = Object.keys(props).reduce((result, propName) => (
+		{ ...result, ...createModelMethods(propName, adapter, readonly.includes(propName)) }
+	), {
+		valueOf() {
+			return this.dataSource()
+		},
+		toString() {
+			return `model of ${this.getModelName()}`
+		},
+		validateDataSource,
+		getModelName,
+		getModelType,
+	})
 
-	function toString() {
-		return `model of ${modelName}`;
+	function validateDataSource(dataSource) {
+		ModelType(dataSource())
 	}
 
 	function getModelName() {
-		return modelName;
+		return ModelType.meta.name
 	}
 
-	return stampit.compose(EventEmittable, {
-		initializers: [initializeModelPrivateArea],
-		methods: { getModelName, toString, valueOf },
-		propertyDescriptors: { data },
-		staticProperties: { getter, property },
-	});
+	function getModelType() {
+		return ModelType
+	}
+
+	function initializeModel(identity) {
+		Reflect.defineProperty(this, 'identity', { value: identity })
+
+		this.dataSource = () => {
+			throw new Error(`No data source has been defined for model ${this.getModelName()}`)
+		}
+	}
+
+	return compose({
+		init: initializeModel,
+		methods: modelMethods,
+		statics: {
+			validateDataSource,
+			getModelName,
+			getModelType,
+			getPropertyMethodName,
+		},
+	})
 }
 
-function setupPropertyAccessor(privates, readonly = false) {
-	return function accessProperty(propertyName, defaultValue = null) {
-
-		const methodSuffix = upperFirst(propertyName);
-		const methods = {};
-
-		methods[`get${methodSuffix}`] = function getPropertyValue() {
-			return privates.getProperty(this, propertyName);
-		};
-
-		function setPropertyValue(newValue) {
-			const oldValue = privates.getProperty(this, propertyName);
-			privates.setProperty(this, propertyName, newValue);
-			this.emit('change', { propertyName, newValue, oldValue });
-		}
-
-		if (readonly !== true) {
-			methods[`set${methodSuffix}`] = setPropertyValue;
-		}
-
-		function initializePropertyValue(data) {
-			let initValue = defaultValue;
-
-			if (isFunction(defaultValue)) {
-				const obtainedValue = Reflect.apply(defaultValue, this, [data]);
-				initValue = obtainedValue;
-			} else if (data && data.hasOwnProperty(propertyName)) {
-				initValue = data[propertyName];
-			}
-
-			privates.setProperty(this, propertyName, initValue);
-		}
-
-		return this.compose({
-			methods, initializers: [initializePropertyValue],
-		});
-	};
+function createModelMethods(name, adapter, isReadonly) {
+	if (isReadonly) {
+		return createGetter(name, adapter)
+	}
+	return {
+		...createGetter(name, adapter),
+		...createSetter(name, adapter),
+	}
 }
 
-export default Model;
+function createGetter(name, adapter) {
+	const getterName = getPropertyMethodName(name, 'get')
+
+	const adapterGetter = adapter[getterName]
+	const getter = isFunction(adapterGetter)
+		? function getter() {
+			return Reflect.apply(adapterGetter, this, [this.dataSource])
+		}
+		: function getter() {
+			return Reflect.apply(adapter.get, this, [name, this.dataSource])
+		}
+
+
+	getter.displayName = getterName
+	return { [getterName]: getter }
+}
+
+function createSetter(name, adapter) {
+	const setterName = getPropertyMethodName(name, 'set')
+
+	const adapterSetter = adapter[setterName]
+	const setter = function setter(value) {
+		if (isFunction(adapterSetter)) {
+			Reflect.apply(adapterSetter, this, [value, this.dataSource])
+		}
+		Reflect.apply(adapter.set, this, [name, value])
+	}
+
+	setter.displayName = setterName
+	return { [setterName]: setter }
+}
+
+function getPropertyMethodName(name, prefix = '') {
+	return `${prefix}${upperFirst(name)}`
+}
+
+export default Model

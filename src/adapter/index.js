@@ -1,3 +1,3 @@
-import Firebase from './firebase';
+import Firebase from './FirebaseAdapter'
 
-export default { Firebase };
+export default { Firebase }

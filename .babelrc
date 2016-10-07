@@ -1,3 +1,4 @@
 {
-	"presets": ["./babelconfig.js"]
+	"presets": ["latest-minimal", "stage-1"],
+	"plugins": ["dev-expression", "transform-flow-strip-types"]
 }
