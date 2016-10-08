@@ -2,7 +2,6 @@
 
 _Manage and run behavior trees for your subjects in your game_
 
-[![npm](https://img.shields.io/npm/v/behavior3-chief.svg?maxAge=2592000)]()
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/BlackDice/b3-chief/master/LICENSE.txt)
 [![Travis](https://img.shields.io/travis/BlackDice/b3-chief.svg?maxAge=2592000)]()
 [![Coverage Status](https://coveralls.io/repos/github/BlackDice/b3-chief/badge.svg?branch=master)](https://coveralls.io/github/BlackDice/b3-chief?branch=master)
@@ -22,9 +21,9 @@ Subject is an _invention_ of the Chief. It represents a single entity that runs 
 
 ## Installation ##
 
-```bash
-	npm install -S behavior3-chief
-```
+[![NPM](https://nodei.co/npm/behavior3-chief.png)](https://www.npmjs.com/package/behavior3-chief)
+
+For use in browser directly: [![UNPKG](https://img.shields.io/badge/unpkg.com--green.svg)](https://unpkg.com/behavior3-chief)
 
 ## Usage ##
 
