@@ -54,23 +54,23 @@
     "babel-register": "6.16.3",
     "buble": "0.14.0",
     "coveralls": "2.11.14",
-    "eslint": "3.7.0",
+    "eslint": "3.7.1",
     "eslint-config-airbnb-base": "8.0.0",
     "eslint-plugin-ava": "3.1.0",
     "eslint-plugin-babel": "3.3.0",
-    "eslint-plugin-import": "1.16.0",
+    "eslint-plugin-import": "2.0.0",
     "fs-promise": "0.5.0",
     "nyc": "8.3.1",
     "publish-please": "2.2.0",
     "rollup": "0.36.1",
     "rollup-plugin-babel": "2.6.1",
-    "rollup-plugin-commonjs": "4.1.0",
+    "rollup-plugin-commonjs": "5.0.4",
     "rollup-plugin-node-resolve": "2.0.0",
     "rollup-plugin-replace": "1.1.1",
     "rollup-plugin-uglify": "1.0.1"
   },
   "optionalDependencies": {
-    "remote-redux-devtools": "0.4.8"
+    "remote-redux-devtools": "0.5.0"
   },
   "ava": {
     "require": [
