@@ -13,7 +13,7 @@
     "start": "ava --watch",
     "test": "ava",
     "lint": "eslint src test --fix",
-    "ci": "npm run lint && npm test",
+    "ci": "npm run lint && npm test && npm run build",
     "coverage": "nyc ava & nyc report --reporter=html",
     "release": "npm run lint && npm run test && npm run build && npm publish dist",
     "coveralls": "nyc ava && nyc report --reporter=text-lcov | coveralls",
