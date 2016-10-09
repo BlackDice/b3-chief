@@ -36,7 +36,7 @@ function execute() {
 			{ format: 'cjs', ext: '.js', package: 'main' },
 		),
 		makeBundle(
-			{ format: 'umd', ext: '.umd.js', package: 'browser', moduleId: 'b3chief' }
+			{ format: 'umd', ext: '.umd.js', moduleId: 'b3chief' }
 		),
 		makeBundle(
 			{ format: 'umd', ext: '.umd.min.js', moduleId: 'b3chief', minify: true	}
