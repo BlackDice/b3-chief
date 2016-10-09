@@ -35,7 +35,7 @@
     "lodash.upperfirst": "4.3.1",
     "redux": "3.6.0",
     "redux-tcomb": "0.2.1",
-    "stampit": "3.0.2",
+    "stampit": "3.0.3",
     "tcomb": "3.2.15",
     "uid": "0.0.2",
     "warning": "github:blackdice/warning"
