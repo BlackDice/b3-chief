@@ -1,18 +1,15 @@
 import { init } from 'stampit'
-import debug from 'debug'
 
 import { STATUS } from './const'
 
-const log = debug('chief')
-
 const ExecutionToolbox = init(initializeToolbox).statics({ reset: resetToolbox })
 
-function initializeToolbox() {
+function initializeToolbox({ onError }) {
 	return Object.freeze({
 		status: Object.freeze(STATUS),
 		timestamp: createTimestampTool(),
 		error(...args) {
-			log(...args)
+			onError(...args)
 			return STATUS.ERROR
 		},
 	})

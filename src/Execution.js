@@ -13,7 +13,7 @@ import BehaviorList from './BehaviorList'
 import Compiler from './Compiler'
 import ExecutionToolbox from './ExecutionToolbox'
 
-import { Status as StatusType } from './types'
+import { Compilation, Status as StatusType } from './types'
 import { BEHAVIOR_TYPE } from './const'
 
 const log = debug('chief')
@@ -24,12 +24,13 @@ const Execution = compose(
 	}
 )
 
-function planExecution(toolboxFactory) {
+function planExecution(toolboxFactory, onError = log) {
 	const compileBehavior = (behavior) => (
-		sanitizeCompilation(t.Function.is(behavior.getCompilation)
+		finishCompilation(
+			t.Function.is(behavior.getCompilation)
 			? behavior.getCompilation()
-			: this.compiler(precompileBehavior(behavior))
-		)
+			: this.compiler(precompileBehavior(behavior), onError)
+		, behavior, onError)
 	)
 
 	const getCompilation = ObjectCache(
@@ -44,7 +45,7 @@ function planExecution(toolboxFactory) {
 		buildSubjectExecution, (subject) => subject.getId()
 	)
 
-	const toolbox = ExecutionToolbox.create()
+	const toolbox = ExecutionToolbox.create({ onError })
 	const getSubjectTargetToolbox = (t.Function.is(toolboxFactory)
 		? ObjectCache(toolboxFactory, (subject) => subject.getTarget())
 		: () => toolbox
@@ -82,60 +83,91 @@ function planExecution(toolboxFactory) {
 const isNodeOpenMemoryTag = '__isOpen'
 
 function execute(executionNode, executionContext, executionTick) {
-	const { memory } = executionContext
+	const { memory, status: { ERROR, RUNNING }} = executionContext
 
-	executeEnter(executionNode, executionContext)
+	if (executeEnter(executionNode, executionContext) === ERROR) {
+		return ERROR
+	}
 
-	if (memory.get(isNodeOpenMemoryTag) !== true) {
-		executeOpen(executionNode, executionContext)
+	const isClosed = memory.get(isNodeOpenMemoryTag) !== true
+
+	if (isClosed && executeOpen(executionNode, executionContext) === ERROR) {
+		return ERROR
 	}
 
 	const tickStatus = executeTick(
 		executionNode, executionContext, executionTick
 	)
 
-	if (tickStatus !== executionContext.status.RUNNING) {
-		executeClose(executionNode, executionContext)
+	if (tickStatus !== RUNNING) {
+		if (executeClose(executionNode, executionContext) === ERROR) {
+			return ERROR
+		}
 	}
 
-	executeExit(executionNode, executionContext)
+	if (executeExit(executionNode, executionContext) === ERROR) {
+		return ERROR
+	}
 
 	return tickStatus
 }
 
 function executeEnter({ node, compilation }, executionContext) {
 	log('entering node %s...', node)
-	compilation.onEnter(executionContext)
+	return executeCompilation(compilation, 'onEnter', executionContext)
 }
 
-function executeOpen({ node, compilation }, executionContext) {
-	log('opening node %s...', node)
-	compilation.onOpen(executionContext)
-	executionContext.memory.set(isNodeOpenMemoryTag, true)
+function executeOpen(executionNode, executionContext) {
+	log('opening node %s...', executionNode.node)
+	const result = executeCompilation(executionNode.compilation, 'onOpen', executionContext)
+	if (result === executionContext.status.ERROR) {
+		// if open fails, the exit should be still executed for a cleanup
+		executeExit(executionNode, executionContext)
+	} else {
+		executionContext.memory.set(isNodeOpenMemoryTag, true)
+	}
+	return result
 }
 
 function executeTick({ node, compilation }, executionContext, executionTick) {
 	log('tick node %s', node)
-	const resultStatus = compilation.tick(executionContext, executionTick)
+
+	const resultStatus = executeCompilation(
+		compilation, 'tick', executionContext, executionTick
+	)
+
 	if (StatusType.is(resultStatus) === false) {
 		return executionContext.error(
 			'invalid status returned by node %s: %s',
 			node, resultStatus
 		)
 	}
+
 	log('tick node %s status: %s', node, resultStatus)
 	return resultStatus
 }
 
 function executeClose({ node, compilation }, executionContext) {
 	log('closing node %s...', node)
-	compilation.onClose(executionContext)
+	const result = executeCompilation(compilation, 'onClose', executionContext)
 	executionContext.memory.set(isNodeOpenMemoryTag, false)
+	return result
 }
 
 function executeExit({ node, compilation }, executionContext) {
 	log('exiting node %s...', node)
-	compilation.onExit(executionContext)
+	return executeCompilation(compilation, 'onExit', executionContext)
+}
+
+function executeCompilation(compilation, methodName, ...args) {
+	try {
+		return Reflect.apply(compilation[methodName], compilation, args)
+	} catch (err) {
+		const [executionContext] = args
+		return executionContext.error(
+			err, 'failed to execute method %s on %s', methodName, compilation.behavior
+		)
+	}
 }
 
 function buildSubjectExecution(subject, toolbox) {
@@ -252,6 +284,12 @@ function createCompositeExecutionTick(executionNode, executeNode) {
 	return { children }
 }
 
+function finishCompilation(compilation, behavior, onError) {
+	return validateCompilation(
+		sanitizeCompilation(compilation, behavior)
+	, onError)
+}
+
 function precompileBehavior(behavior) {
 	return `
 		'use strict';
@@ -268,10 +306,20 @@ const initialCompilation = {
 	onExit: emptyLifecycleMethod,
 }
 
-function sanitizeCompilation(compilation) {
-	return {
+function sanitizeCompilation(compilation, behavior) {
+	return Object.freeze({
 		...initialCompilation,
 		...compilation,
+		behavior: behavior.toString(),
+	})
+}
+
+function validateCompilation(compilation, onError) {
+	try {
+		return Compilation(compilation)
+	} catch (err) {
+		onError(err, 'invalid compilation for behavior %s', compilation.behavior)
+		return compilation
 	}
 }
 
