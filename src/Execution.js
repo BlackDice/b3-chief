@@ -17,6 +17,7 @@ import { Compilation, Status as StatusType } from './types'
 import { BEHAVIOR_TYPE } from './const'
 
 const log = debug('chief')
+const logTick = debug('chief:tick')
 
 const Execution = compose(
 	SubjectList, TreeList, BehaviorList, Compiler, {
@@ -130,7 +131,7 @@ function executeOpen(executionNode, executionContext) {
 }
 
 function executeTick({ node, compilation }, executionContext, executionTick) {
-	log('tick node %s', node)
+	log('ticking node %s...', node)
 
 	const resultStatus = executeCompilation(
 		compilation, 'tick', executionContext, executionTick
@@ -143,7 +144,7 @@ function executeTick({ node, compilation }, executionContext, executionTick) {
 		)
 	}
 
-	log('tick node %s status: %s', node, resultStatus)
+	logTick('node %s result: %s', node, resultStatus)
 	return resultStatus
 }
 
