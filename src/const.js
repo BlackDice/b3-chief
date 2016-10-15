@@ -9,6 +9,7 @@ export const BEHAVIOR_TYPE = keymirror({
 	COMPOSITE: null,
 	DECORATOR: null,
 	LEAF: null,
+	SUBTREE: null,
 })
 
 export const STATUS = keymirror({

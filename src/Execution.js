@@ -11,9 +11,11 @@ import SubjectList from './SubjectList'
 import TreeList from './TreeList'
 import BehaviorList from './BehaviorList'
 import Compiler from './Compiler'
-import ExecutionToolbox from './ExecutionToolbox'
 
-import { Compilation, Status as StatusType } from './types'
+import ExecutionToolbox from './ExecutionToolbox'
+import ExecutionCompiler from './ExecutionCompiler'
+
+import { Status as StatusType } from './types'
 import { BEHAVIOR_TYPE } from './const'
 
 const log = debug('chief')
@@ -25,19 +27,7 @@ const Execution = compose(
 	}
 )
 
-function planExecution(toolboxFactory, onError = log) {
-	const compileBehavior = (behavior) => (
-		finishCompilation(
-			t.Function.is(behavior.getCompilation)
-			? behavior.getCompilation()
-			: this.compiler(precompileBehavior(behavior), onError)
-		, behavior, onError)
-	)
-
-	const getCompilation = ObjectCache(
-		compileBehavior, (behavior) => behavior.getId()
-	)
-
+function planExecution(toolboxFactory = () => null, onError = log) {
 	const getExecutionRootNode = ObjectCache(
 		buildExecutionTree, (tree) => tree.getId()
 	)
@@ -47,35 +37,50 @@ function planExecution(toolboxFactory, onError = log) {
 	)
 
 	const toolbox = ExecutionToolbox.create({ onError })
-	const getSubjectTargetToolbox = (t.Function.is(toolboxFactory)
-		? ObjectCache(toolboxFactory, (subject) => subject.getTarget())
-		: () => toolbox
+	const getSubjectTargetToolbox = ObjectCache(
+		(subject) => assembleSubjectToolbox(toolbox, toolboxFactory(subject)),
+		(subject) => subject.getTarget()
 	)
+
+	const compileBehavior = ExecutionCompiler({ compiler: this.compiler, onError })
 
 	const buildExecutionNode = (node) => {
 		const behaviorId = node.getBehaviorId()
 		const behavior = this.getBehavior(behaviorId)
-		const compilation = getCompilation(behavior)
+		const compilation = compileBehavior(behavior)
 		return createExecutionNode(node, behavior, compilation)
 	}
 
-	const executeSubject = (subject) => {
-		const treeId = subject.getTreeId()
+	const getTreeExecution = (subjectExecution) => (treeId) => {
 		const tree = this.getTree(treeId)
 		if (tree === null) {
-			return toolbox.error('%s has invalid tree %s assigned', subject, treeId)
+			return toolbox.error('trying to execute invalid tree %s', treeId)
 		}
 
 		const rootExecutionNode = getExecutionRootNode(tree, buildExecutionNode)
 		if (rootExecutionNode === null) {
-			return toolbox.error('%s has no root node attached', tree)
+			return toolbox.error('%s has no root node attached', treeId)
 		}
 
-		const subjectToolbox = getSubjectTargetToolbox(subject, toolbox)
+		return subjectExecution(rootExecutionNode)
+	}
+
+	const executeSubject = (subject) => {
+		const subjectToolbox = getSubjectTargetToolbox(subject)
 		ExecutionToolbox.reset(subjectToolbox)
 
 		const subjectExecution = getSubjectExecution(subject, subjectToolbox)
-		return subjectExecution(rootExecutionNode)
+		const executeTree = getTreeExecution(subjectExecution)
+
+		// this isn't very pretty solution as it makes the function accessible
+		// on execution context object as well and it shouldn't be possible to
+		// execute tree in different method than tick
+		// however with current layout there is other way to pass that all the
+		// way down there (createSubtreeExecutionTick)
+		subjectToolbox.executeTree = executeTree
+
+		log('executing subject %s with target %s', subject.getId(), subject.getTarget())
+		return executeTree(subject.getTreeId())
 	}
 
 	return executeSubject
@@ -248,6 +253,13 @@ function assembleNodeConfig(behaviorConfig, nodeConfig) {
 	return assign({}, behaviorConfig || {}, nodeConfig || {})
 }
 
+function assembleSubjectToolbox(toolbox, toolboxFactoryOutput) {
+	if (t.Object.is(toolboxFactoryOutput)) {
+		return assign(toolboxFactoryOutput, toolbox)
+	}
+	return assign({}, toolbox)
+}
+
 function createExecutionContext(executionNode, subject, toolbox) {
 	return assign({
 		config: executionNode.config,
@@ -257,15 +269,18 @@ function createExecutionContext(executionNode, subject, toolbox) {
 	}, toolbox)
 }
 
-function createExecutionTick(executionNode, executeNode, toolbox) {
-	switch (executionNode.type) {
-	case BEHAVIOR_TYPE.DECORATOR:
-		return createDecoratorExecutionTick(executionNode, executeNode, toolbox)
-	case BEHAVIOR_TYPE.COMPOSITE:
-		return createCompositeExecutionTick(executionNode, executeNode)
-	default:
-		return {}
+const executionTickByBehaviorType = {
+	[BEHAVIOR_TYPE.DECORATOR]: createDecoratorExecutionTick,
+	[BEHAVIOR_TYPE.COMPOSITE]: createCompositeExecutionTick,
+	[BEHAVIOR_TYPE.SUBTREE]: createSubtreeExecutionTick,
+}
+
+function createExecutionTick(executionNode, ...args) {
+	const factoryFunction = executionTickByBehaviorType[executionNode.type]
+	if (factoryFunction !== undefined) {
+		return factoryFunction(executionNode, ...args)
 	}
+	return {}
 }
 
 function createDecoratorExecutionTick(executionNode, executeNode, toolbox) {
@@ -285,43 +300,8 @@ function createCompositeExecutionTick(executionNode, executeNode) {
 	return { children }
 }
 
-function finishCompilation(compilation, behavior, onError) {
-	return validateCompilation(
-		sanitizeCompilation(compilation, behavior)
-	, onError)
-}
-
-function precompileBehavior(behavior) {
-	return `
-		'use strict';
-		var compiled = ${behavior.getDefinition()};
-		compiled;
-	`
-}
-
-const emptyLifecycleMethod = () => {}
-const initialCompilation = {
-	onEnter: emptyLifecycleMethod,
-	onOpen: emptyLifecycleMethod,
-	onClose: emptyLifecycleMethod,
-	onExit: emptyLifecycleMethod,
-}
-
-function sanitizeCompilation(compilation, behavior) {
-	return Object.freeze({
-		...initialCompilation,
-		...compilation,
-		behavior: behavior.toString(),
-	})
-}
-
-function validateCompilation(compilation, onError) {
-	try {
-		return Compilation(compilation)
-	} catch (err) {
-		onError(err, 'invalid compilation for behavior %s', compilation.behavior)
-		return compilation
-	}
+function createSubtreeExecutionTick(executionNode, executeNode, toolbox) {
+	return { executeTree: toolbox.executeTree }
 }
 
 export default Execution

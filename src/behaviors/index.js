@@ -12,6 +12,7 @@ import RepeatUntilFailure from './RepeatUntilFailure'
 import RepeatUntilSuccess from './RepeatUntilSuccess'
 import Runner from './Runner'
 import Sequence from './Sequence'
+import Subtree from './Subtree'
 import Succeeder from './Succeeder'
 import Wait from './Wait'
 
@@ -29,6 +30,7 @@ export default [
 	RepeatUntilSuccess,
 	Runner,
 	Sequence,
+	Subtree,
 	Succeeder,
 	Wait,
 ]

@@ -37,6 +37,7 @@ test.beforeEach((t) => {
 	}
 	t.context.execution = instance.planExecution()
 	t.context.status = Chief.STATUS
+	t.context.behaviorType = Chief.BEHAVIOR_TYPE
 })
 
 test('execution() returns ERROR status if subject has invalid tree', (t) => {
@@ -85,13 +86,13 @@ test('execution() provides execution context and tick object to tick behavior me
 })
 
 test('the node with decorator behavior can execute its child and get its status', (t) => {
-	const { execution, Chief, status, createTreeWithRoot, createNativeBehaviorNode } = t.context
+	const { execution, behaviorType, status, createTreeWithRoot, createNativeBehaviorNode } = t.context // eslint-disable-line max-len
 
 	const { subject, tree, node } = createTreeWithRoot({
 		tick(context, { child }) {
 			return child()
 		},
-	}, Chief.BEHAVIOR_TYPE.DECORATOR)
+	}, behaviorType.DECORATOR)
 
 	tree.addNodeChild(node, createNativeBehaviorNode(tree, 'Succeeder'))
 
@@ -100,18 +101,36 @@ test('the node with decorator behavior can execute its child and get its status'
 })
 
 test('the node with composite behavior can execute its children and get their status', (t) => {
-	const { execution, Chief, status, createTreeWithRoot, createNativeBehaviorNode } = t.context
+	const { execution, behaviorType, status, createTreeWithRoot, createNativeBehaviorNode } = t.context // eslint-disable-line max-len
 
 	const { subject, tree, node } = createTreeWithRoot({
 		tick(context, { children }) {
 			return children.reduce((result, child) => child(), null)
 		},
-	}, Chief.BEHAVIOR_TYPE.COMPOSITE)
+	}, behaviorType.COMPOSITE)
 
 	tree.addNodeChild(node, createNativeBehaviorNode(tree, 'Runner'))
 	tree.addNodeChild(node, createNativeBehaviorNode(tree, 'Failer'))
 	tree.addNodeChild(node, createNativeBehaviorNode(tree, 'Succeeder'))
 
+	const actual = execution(subject)
+	t.is(actual, status.SUCCESS)
+})
+
+test('the node with subtree behavior can execute another tree by its id', (t) => {
+	const { instance, execution, behaviorType, status, createTreeWithRoot, createBehaviorNode } = t.context  // eslint-disable-line max-len
+
+	const subtree = instance.createTree('SubTree')
+	subtree.setRootNode(createBehaviorNode(subtree))
+
+	const { subject } = createTreeWithRoot({
+		tick(context, { executeTree }) {
+			t.pass()
+			return executeTree(subtree.getId())
+		},
+	}, behaviorType.SUBTREE)
+
+	t.plan(2)
 	const actual = execution(subject)
 	t.is(actual, status.SUCCESS)
 })
@@ -130,7 +149,7 @@ test('lifecycle method onEnter is invoked whenever node is being executed', (t) 
 	execution(subject)
 })
 
-test('runtime error in onEnter method is handled by error toolbox function', (t) => {
+test('runtime error in onEnter method is passed through onError callback', (t) => {
 	const { instance, status, createTreeWithRoot } = t.context
 
 	const expected = new Error('onEnter')
@@ -141,14 +160,11 @@ test('runtime error in onEnter method is handled by error toolbox function', (t)
 		},
 	})
 
-	const error = (actual) => {
+	const onError = (actual) => {
 		t.is(actual, expected)
-		return status.ERROR
 	}
 
-	const execution = instance.planExecution((subj, toolbox) => (
-		{ ...toolbox, error }
-	))
+	const execution = instance.planExecution(undefined, onError)
 
 	t.plan(2)
 	t.is(execution(subject), status.ERROR)
@@ -172,7 +188,7 @@ test('lifecycle method onOpen is invoked only if node was closed previous tick',
 	execution(subject)
 })
 
-test('runtime error in onOpen method is handled by error toolbox function', (t) => {
+test('runtime error in onOpen method is passed through onError callback', (t) => {
 	const { instance, status, createTreeWithRoot } = t.context
 
 	const expected = new Error('onOpen')
@@ -185,10 +201,9 @@ test('runtime error in onOpen method is handled by error toolbox function', (t) 
 
 	const onError = (actual) => {
 		t.is(actual, expected)
-		return status.ERROR
 	}
 
-	const execution = instance.planExecution((subj, toolbox) => toolbox, onError)
+	const execution = instance.planExecution(undefined, onError)
 
 	t.plan(2)
 	t.is(execution(subject), status.ERROR)
@@ -210,7 +225,7 @@ test('runtime error in onOpen still causes invocation of onExit method ', (t) =>
 	execution(subject)
 })
 
-test('runtime error in tick method is handled by error toolbox function', (t) => {
+test('runtime error in tick method is passed through onError callback', (t) => {
 	const { instance, status, createTreeWithRoot } = t.context
 
 	const expected = new Error('tick')
@@ -223,10 +238,9 @@ test('runtime error in tick method is handled by error toolbox function', (t) =>
 
 	const onError = (actual) => {
 		t.is(actual, expected)
-		return status.ERROR
 	}
 
-	const execution = instance.planExecution((subj, toolbox) => toolbox, onError)
+	const execution = instance.planExecution(undefined, onError)
 
 	t.plan(2)
 	t.is(execution(subject), status.ERROR)
@@ -254,7 +268,7 @@ test('lifecycle method onClose is invoked only when tick status is not RUNNING',
 	execution(subject)
 })
 
-test('runtime error in onClose method is handled by error toolbox function', (t) => {
+test('runtime error in onClose method is passed through onError callback', (t) => {
 	const { instance, status, createTreeWithRoot } = t.context
 
 	const expected = new Error('onClose')
@@ -267,10 +281,9 @@ test('runtime error in onClose method is handled by error toolbox function', (t)
 
 	const onError = (actual) => {
 		t.is(actual, expected)
-		return status.ERROR
 	}
 
-	const execution = instance.planExecution((subj, toolbox) => toolbox, onError)
+	const execution = instance.planExecution(undefined, onError)
 
 	t.plan(2)
 	t.is(execution(subject), status.ERROR)
@@ -292,7 +305,7 @@ test('lifecycle method onExit is invoked always without need for specific status
 	execution(subject)
 })
 
-test('runtime error in onExit method is handled by error toolbox function', (t) => {
+test('runtime error in onExit method is passed through onError callback', (t) => {
 	const { instance, status, createTreeWithRoot } = t.context
 
 	const expected = new Error('onExit')
@@ -305,10 +318,9 @@ test('runtime error in onExit method is handled by error toolbox function', (t) 
 
 	const onError = (actual) => {
 		t.is(actual, expected)
-		return status.ERROR
 	}
 
-	const execution = instance.planExecution((subj, toolbox) => toolbox, onError)
+	const execution = instance.planExecution(undefined, onError)
 
 	t.plan(2)
 	t.is(execution(subject), status.ERROR)
@@ -347,13 +359,13 @@ test('lifecycle methods are executed in correct order', (t) => {
 })
 
 test('resulting status is the ERROR if invalid status was returned from node tick', (t) => {
-	const { execution, Chief, status, createTreeWithRoot, createBehaviorNode } = t.context
+	const { execution, behaviorType, status, createTreeWithRoot, createBehaviorNode } = t.context
 
 	const { subject, tree, node } = createTreeWithRoot({
 		tick(context, { child }) {
 			return child()
 		},
-	}, Chief.BEHAVIOR_TYPE.DECORATOR)
+	}, behaviorType.DECORATOR)
 
 	tree.addNodeChild(node, createBehaviorNode(tree, {
 		tick() {
@@ -367,14 +379,14 @@ test('resulting status is the ERROR if invalid status was returned from node tic
 })
 
 test('planExecution() accepts factory function to provide tools added to context for a given subject', (t) => {
-	const { instance, Chief, createTreeWithRoot, createBehaviorNode } = t.context
+	const { instance, behaviorType, createTreeWithRoot, createBehaviorNode } = t.context
 
 	const { subject, tree, node } = createTreeWithRoot({
 		tick(context, { child }) {
 			t.true(context.expected)
 			return child()
 		},
-	}, Chief.BEHAVIOR_TYPE.DECORATOR)
+	}, behaviorType.DECORATOR)
 
 	tree.addNodeChild(node, createBehaviorNode(tree, {
 		tick({ status, expected }) {
@@ -383,8 +395,8 @@ test('planExecution() accepts factory function to provide tools added to context
 		},
 	}))
 
-	const execution = instance.planExecution((subj, toolbox) => (
-		{ ...toolbox, expected: true }
+	const execution = instance.planExecution(() => (
+		{ expected: true }
 	))
 
 	t.plan(2)

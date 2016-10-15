@@ -19,4 +19,11 @@ export const TickComposite = TickLeaf.extend({
 	strict: true,
 })
 
-export default t.union([TickLeaf, TickDecorator, TickComposite], 'Tick')
+export const TickSubtree = TickLeaf.extend({
+	executeTree: t.Function,
+}, {
+	name: 'ExecutionTickSubtree',
+	strict: true,
+})
+
+export default t.union([TickLeaf, TickDecorator, TickComposite, TickSubtree], 'Tick')
