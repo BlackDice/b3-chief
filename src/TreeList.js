@@ -38,6 +38,7 @@ function initializeTreeList() {
 		}
 		switch (behavior.getType()) {
 		case BEHAVIOR_TYPE.LEAF: return 0
+		case BEHAVIOR_TYPE.SUBTREE: return 0
 		case BEHAVIOR_TYPE.DECORATOR: return 1
 		default: return behavior.getMaxChildren() || Infinity
 		}
