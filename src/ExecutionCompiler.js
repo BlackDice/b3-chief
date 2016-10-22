@@ -30,11 +30,9 @@ const initialCompilation = {
 	onExit: emptyLifecycleMethod,
 }
 
-function wrapDefinition(behavior) {
+function wrapDefinition(definition) {
 	return `
-		'use strict';
-		var compiled = ${behavior.getDefinition()};
-		compiled;
+		'use strict'; var c = ${definition}; c;
 	`
 }
 

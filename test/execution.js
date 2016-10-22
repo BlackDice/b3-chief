@@ -14,6 +14,10 @@ test.beforeEach((t) => {
 		behaviors[behaviorId] || instance.getNativeBehavior(behaviorId)
 	)
 
+	t.context.addBehavior = (behavior) => {
+		behaviors[behavior.getId()] = behavior
+	}
+
 	t.context.createBehaviorNode = (tree, compilation = {}, type) => {
 		const correctCompilation = {
 			tick: ({ status }) => status.SUCCESS,
@@ -21,7 +25,7 @@ test.beforeEach((t) => {
 		}
 		const behavior = instance.createBehavior(`Test${counter += 1}`, type)
 		behavior.getCompilation = () => correctCompilation
-		behaviors[behavior.getId()] = behavior
+		t.context.addBehavior(behavior)
 		const node = tree.createNode(behavior.getId())
 		return node
 	}
@@ -35,7 +39,7 @@ test.beforeEach((t) => {
 		tree.setRootNode(node)
 		return { tree, subject, node }
 	}
-	t.context.execution = instance.planExecution()
+	t.context.execution = instance.planExecution(undefined, console.log)
 	t.context.status = Chief.STATUS
 	t.context.behaviorType = Chief.BEHAVIOR_TYPE
 })
@@ -356,6 +360,42 @@ test('lifecycle methods are executed in correct order', (t) => {
 
 	execution(subject)
 	t.is(stage, 5)
+})
+
+test.only('definition of behavior gets compiled before execution', (t) => {
+	const { execution, instance, behaviorType, createTreeWithRoot } = t.context
+
+	const definition = `{
+		onEnter({ memory }) { memory.set('onEnter', true) },
+		onOpen({ memory }) { memory.set('onOpen', true) },
+		tick({ memory, status }) {
+			memory.set('tick', true)
+			return status.SUCCESS
+		},
+		onClose({ memory }) { memory.set('onClose', true) },
+		onExit({ memory }) { memory.set('onExit', true) },
+	}`
+
+	const { subject, tree, node: rootNode } = createTreeWithRoot({
+		tick(context, { child }) {
+			return child()
+		},
+	}, behaviorType.DECORATOR)
+
+	const behavior = instance.createBehavior('WithDefinition')
+	behavior.setDefinition(definition)
+	t.context.addBehavior(behavior)
+
+	const node = tree.createNode(behavior.getId())
+	tree.addNodeChild(rootNode, node)
+
+	execution(subject)
+	const nodeMemory = subject.getNodeMemory(node.getId(), tree.getId())
+	t.true(nodeMemory.get('onEnter'))
+	t.true(nodeMemory.get('onOpen'))
+	t.true(nodeMemory.get('tick'))
+	t.true(nodeMemory.get('onClose'))
+	t.true(nodeMemory.get('onExit'))
 })
 
 test('resulting status is the ERROR if invalid status was returned from node tick', (t) => {
