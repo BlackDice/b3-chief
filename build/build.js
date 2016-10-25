@@ -43,7 +43,12 @@ function execute() {
 		),
 		fs.copy('LICENSE.txt', 'dist/LICENSE.txt'),
 		fs.copy('README.md', 'dist/README.md'),
-	]).then(writePackage))
+	])
+	.then(writePackage))
+	.catch((err) => {
+		console.error(err)
+		process.exit(1)
+	})
 }
 
 function makeBundle(config) {
@@ -62,7 +67,12 @@ function makeBundle(config) {
 			nodeResolve({
 				browser: isUMD, preferBuiltins: !isUMD,
 			}),
-			commonJs({ include: 'node_modules/**', ignoreGlobal: true }),
+			commonJs({
+				include: 'node_modules/**', ignoreGlobal: true,
+				namedExports: {
+					'redux-tcomb': ['createCheckedMiddleware', 'createCheckedReducer'],
+				},
+			}),
 		],
 	}
 
