@@ -39,7 +39,7 @@ test.beforeEach((t) => {
 		tree.setRootNode(node)
 		return { tree, subject, node }
 	}
-	t.context.execution = instance.planExecution(undefined, console.log)
+	t.context.execution = instance.planExecution(undefined)
 	t.context.status = Chief.STATUS
 	t.context.behaviorType = Chief.BEHAVIOR_TYPE
 })
@@ -362,7 +362,7 @@ test('lifecycle methods are executed in correct order', (t) => {
 	t.is(stage, 5)
 })
 
-test.only('definition of behavior gets compiled before execution', (t) => {
+test('definition of behavior gets compiled before execution', (t) => {
 	const { execution, instance, behaviorType, createTreeWithRoot } = t.context
 
 	const definition = `{
