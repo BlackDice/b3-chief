@@ -91,6 +91,10 @@ function destroyNode(nodeId) {
 		return
 	}
 
+	invariant(nodeModel.getParentId() === null, oneLine`
+		The node %s has a parent %s set. Please call 'removeChildNode' before 'destroyNode'
+	`, nodeModel, nodeModel.getParentId())
+
 	nodeModel.destroy()
 }
 

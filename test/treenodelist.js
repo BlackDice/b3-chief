@@ -60,6 +60,13 @@ test('destroyNode() removes node from list of nodes', (t) => {
 	t.false(tree.hasNode(id))
 })
 
+test('destroyNode() forbids to destroy node that has a parent', (t) => {
+	const { tree } = t.context
+	const node = tree.createNode('Test')
+	tree.setRootNode(node)
+	t.throws(() => tree.destroyNode(node), /has a parent/)
+})
+
 test('toString() contains ID of the node and behavior', (t) => {
 	const { tree } = t.context
 	const node = tree.createNode('Test')
