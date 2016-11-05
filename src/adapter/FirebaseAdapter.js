@@ -40,6 +40,8 @@ function sync(watchRemote = false) {
 	if (watchRemote === true) {
 		behaviorsRef.on('value', (snapshot) => this.chief.store.actions.replaceBehaviors(snapshot.val()))
 		treesRef.on('value', (snapshot) => this.chief.store.actions.replaceTrees(snapshot.val()))
+		// subjects are synchronized to the firebase, not from it
+		observe(selectors.subjects, (subjects) => subjectsRef.set(subjects))
 		return syncPromise.then(() => this.chief)
 	}
 
