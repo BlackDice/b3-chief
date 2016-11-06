@@ -61,6 +61,23 @@ test('getBehavior() returns native behavior by ID', (t) => {
 	t.is(actual.getId(), 'Native-Succeeder')
 })
 
+test('getBehaviorByName() returns behavior model by name', (t) => {
+	const { instance } = t.context
+	t.is(instance.getBehaviorByName('unknown'), null)
+
+	const expected = instance.createBehavior('TEST')
+	const actual = instance.getBehaviorByName('TEST')
+
+	t.is(actual.getId(), expected.getId())
+})
+
+test('getBehaviorByName() returns native behavior by name', (t) => {
+	const { instance } = t.context
+	const actual = instance.getBehaviorByName('Sequence')
+	t.truthy(actual)
+	t.is(actual.getName(), 'Sequence')
+})
+
 test('destroyBehavior() removes behavior from list and disposes it', (t) => {
 	const { instance } = t.context
 

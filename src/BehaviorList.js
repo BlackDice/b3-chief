@@ -23,9 +23,10 @@ const BehaviorList = compose(
 			addBehavior,
 			createBehavior,
 			destroyBehavior,
-			getBehavior,
 			hasBehavior,
 			hasBehaviorName,
+			getBehavior,
+			getBehaviorByName,
 			listBehaviors,
 		},
 	}
@@ -117,6 +118,14 @@ function getBehavior(behaviorId) {
 	const behavior = this[bList].get(behaviorId)
 	if (behavior === null) {
 		return this.getNativeBehavior(behaviorId)
+	}
+	return behavior
+}
+
+function getBehaviorByName(behaviorName) {
+	const behavior = this[bList].find((model) => model.getName() === behaviorName)
+	if (behavior === null) {
+		return this.getNativeBehaviorByName(behaviorName)
 	}
 	return behavior
 }

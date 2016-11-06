@@ -28,11 +28,15 @@ function initializeNativeBehaviors() {
 		nativeModelMap[behaviorId] || null
 	)
 
+	const getNativeBehaviorByName = (behaviorName) => (
+		nativeModels.find((model) => model.getName() === behaviorName) || null
+	)
+
 	const listNativeBehaviors = () => (
 		Array.from(nativeModels)
 	)
 
-	Object.assign(this, { getNativeBehavior, listNativeBehaviors })
+	Object.assign(this, { getNativeBehavior, getNativeBehaviorByName, listNativeBehaviors })
 }
 
 export default NativeBehaviors

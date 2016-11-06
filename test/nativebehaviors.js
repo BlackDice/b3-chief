@@ -9,6 +9,25 @@ test('getNativeBehavior() returns native behavior by id', (t) => {
 	t.is(success.getName(), 'Succeeder')
 })
 
+test('getNativeBehavior() returns null for missing native behavior by id', (t) => {
+	const { instance } = t.context
+	const missing = instance.getNativeBehavior('Native-MISSING')
+	t.is(missing, null)
+})
+
+test('getNativeBehaviorByName() finds native behavior by name', (t) => {
+	const { instance } = t.context
+	const sequence = instance.getNativeBehaviorByName('Sequence')
+	t.truthy(sequence)
+	t.is(sequence.getId(), 'Native-Sequence')
+})
+
+test('getNativeBehaviorByName() returns null for missing native behavior by name', (t) => {
+	const { instance } = t.context
+	const missing = instance.getNativeBehavior('MISSING')
+	t.is(missing, null)
+})
+
 test('no property of native behavior can be changed', (t) => {
 	const { instance } = t.context
 	const error = instance.getNativeBehavior('Native-Error')
