@@ -2,12 +2,12 @@ import { oneLine } from 'common-tags'
 import { BEHAVIOR_TYPE } from '../const'
 
 const behavior = {
-	name: 'Priority',
+	name: 'Selector',
 	type: BEHAVIOR_TYPE.COMPOSITE,
 	description: oneLine`
-		Priority ticks its children sequentially until one of them returns
+		Selector ticks its children sequentially until one of them returns
 		SUCCESS, RUNNING or ERROR. If all children return the failure state,
-		the priority also returns FAILURE.
+		the selector also returns FAILURE.
 	`,
 }
 

@@ -4,19 +4,19 @@ import { BEHAVIOR_TYPE } from '../const'
 const initialChildIndex = 0
 
 const behavior = {
-	name: 'MemPriority',
+	name: 'MemSelector',
 	type: BEHAVIOR_TYPE.COMPOSITE,
 	description: oneLine`
-		MemPriority is similar to Priority node, but when a child returns a
+		MemSelector is similar to Selector node, but when a child returns a
 		RUNNING state, its index is recorded and in the next tick the,
-		MemPriority calls the child recorded directly, without calling previous
+		MemSelector calls the child recorded directly, without calling previous
 		children again.
 	`,
 }
 
 const compilation = {
-	onOpen({ subjectMemory }) {
-		subjectMemory.set('runningChild', initialChildIndex)
+	onOpen({ memory }) {
+		memory.set('runningChild', initialChildIndex)
 	},
 	tick({ status, memory }, { children }) {
 		const childrenCount = children.length

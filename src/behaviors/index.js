@@ -4,9 +4,9 @@ import Failer from './Failer'
 import Inverter from './Inverter'
 import Limiter from './Limiter'
 import MaxTime from './MaxTime'
-import MemPriority from './MemPriority'
+import MemSelector from './MemSelector'
 import MemSequence from './MemSequence'
-import Priority from './Priority'
+import Selector from './Selector'
 import Repeater from './Repeater'
 import RepeatUntilFailure from './RepeatUntilFailure'
 import RepeatUntilSuccess from './RepeatUntilSuccess'
@@ -22,9 +22,9 @@ export default [
 	Inverter,
 	Limiter,
 	MaxTime,
-	MemPriority,
+	MemSelector,
 	MemSequence,
-	Priority,
+	Selector,
 	Repeater,
 	RepeatUntilFailure,
 	RepeatUntilSuccess,
