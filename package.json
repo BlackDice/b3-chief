@@ -54,7 +54,7 @@
     "babel-preset-stage-1": "6.16.0",
     "babel-register": "6.18.0",
     "buble": "0.14.2",
-    "coveralls": "2.11.14",
+    "coveralls": "2.11.15",
     "eslint": "3.9.0",
     "eslint-config-airbnb-base": "8.0.0",
     "eslint-plugin-ava": "4.0.0",
