@@ -9,7 +9,7 @@ import Disposable from './core/Disposable'
 const MemoryModel = compose(
 	Disposable, {
 		init: initializeMemoryModel,
-	}
+	},
 )
 
 function initializeMemoryModel({ store, subjectId, memoryId }) {

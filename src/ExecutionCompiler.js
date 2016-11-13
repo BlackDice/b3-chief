@@ -15,7 +15,7 @@ export default function createExecutionCompiler({ compiler, onError }) {
 			t.Function.is(behavior.getCompilation)
 				? behavior.getCompilation()
 				: compileBehavior(behavior)
-			, behavior, onError
+			, behavior, onError,
 		)
 	)
 

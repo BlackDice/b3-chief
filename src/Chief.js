@@ -14,7 +14,7 @@ const Chief = compose(
 	BehaviorList, SubjectList, TreeList, Execution, Uid, {
 		init: initializeChief,
 		statics: { ...constants, adapter },
-	}
+	},
 )
 
 function initializeChief() {

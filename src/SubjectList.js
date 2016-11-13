@@ -18,7 +18,7 @@ const SubjectList = compose(
 			getSubject,
 			listSubjects,
 		},
-	}
+	},
 )
 
 const bList = Symbol('list of subjects')

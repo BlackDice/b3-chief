@@ -13,8 +13,8 @@ const behavior = {
 
 const compilation = {
 	tick({ status }, { children }) {
-		for (const child of children) {
-			const childStatus = child()
+		for (let i = 0, len = children.length; i < len; i += 1) {
+			const childStatus = children[i]()
 			if (childStatus !== status.FAILURE) {
 				return childStatus
 			}

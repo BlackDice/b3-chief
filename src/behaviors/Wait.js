@@ -19,7 +19,7 @@ const compilation = {
 		}
 		if (milliseconds < minimumWait) {
 			throw new Error(
-				`Wait.milliseconds must be at least ${minimumWait}, got: ${milliseconds}`
+				`Wait.milliseconds must be at least ${minimumWait}, got: ${milliseconds}`,
 			)
 		}
 	},

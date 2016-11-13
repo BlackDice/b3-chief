@@ -28,7 +28,7 @@ const compilation = {
 		}
 		if (maxLoop < minimumMaxLoop) {
 			throw new Error(
-				`Repeater.maxLoop must be at least ${minimumMaxLoop}, got: ${maxLoop}`
+				`Repeater.maxLoop must be at least ${minimumMaxLoop}, got: ${maxLoop}`,
 			)
 		}
 	},

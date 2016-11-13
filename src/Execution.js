@@ -24,22 +24,22 @@ const logTick = debug('chief:tick')
 const Execution = compose(
 	SubjectList, TreeList, BehaviorList, Compiler, {
 		methods: { planExecution },
-	}
+	},
 )
 
 function planExecution(toolboxFactory = () => null, onError = log) {
 	const getExecutionRootNode = ObjectCache(
-		buildExecutionTree, (tree) => tree.getId()
+		buildExecutionTree, (tree) => tree.getId(),
 	)
 
 	const getSubjectExecution = ObjectCache(
-		buildSubjectExecution, (subject) => subject.getId()
+		buildSubjectExecution, (subject) => subject.getId(),
 	)
 
 	const toolbox = ExecutionToolbox.create({ onError })
 	const getSubjectTargetToolbox = ObjectCache(
 		(subject) => assembleSubjectToolbox(toolbox, toolboxFactory(subject)),
-		(subject) => subject.getTarget()
+		(subject) => subject.getTarget(),
 	)
 
 	const compileBehavior = ExecutionCompiler({ compiler: this.compiler, onError })
@@ -102,7 +102,7 @@ function execute(executionNode, executionContext, executionTick) {
 	}
 
 	const tickStatus = executeTick(
-		executionNode, executionContext, executionTick
+		executionNode, executionContext, executionTick,
 	)
 
 	if (tickStatus !== RUNNING) {
@@ -139,13 +139,13 @@ function executeTick({ node, compilation }, executionContext, executionTick) {
 	log('ticking node %s...', node)
 
 	const resultStatus = executeCompilation(
-		compilation, 'tick', executionContext, executionTick
+		compilation, 'tick', executionContext, executionTick,
 	)
 
 	if (StatusType.is(resultStatus) === false) {
 		return executionContext.error(
 			'invalid status returned by node %s: %s',
-			node, resultStatus
+			node, resultStatus,
 		)
 	}
 
@@ -171,7 +171,7 @@ function executeCompilation(compilation, methodName, ...args) {
 	} catch (err) {
 		const [executionContext] = args
 		return executionContext.error(
-			err, 'failed to execute method %s on %s', methodName, compilation.behavior
+			err, 'failed to execute method %s on %s', methodName, compilation.behavior,
 		)
 	}
 }
