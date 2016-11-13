@@ -3,7 +3,7 @@
 _Manage and run behavior trees for your subjects in your game_
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/BlackDice/b3-chief/master/LICENSE.txt)
-[![Travis](https://img.shields.io/travis/BlackDice/b3-chief.svg?maxAge=2592000)]()
+[![Travis](https://img.shields.io/travis/BlackDice/b3-chief.svg?maxAge=2592000)](https://travis-ci.org/BlackDice/b3-chief/)
 [![Coverage Status](https://coveralls.io/repos/github/BlackDice/b3-chief/badge.svg?branch=master)](https://coveralls.io/github/BlackDice/b3-chief?branch=master)
 [![Code Climate](https://codeclimate.com/github/BlackDice/b3-chief/badges/gpa.svg)](https://codeclimate.com/github/BlackDice/b3-chief)
 [![David](https://img.shields.io/david/BlackDice/b3-chief.svg?maxAge=2592000)]()
