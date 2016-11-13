@@ -48,7 +48,7 @@ function initializeTreeList() {
 
 	this[bList] = setupModelList(
 		TreeModel,
-		this.store.select(this.store.selectors.trees)
+		this.store.select(this.store.selectors.trees),
 	)
 	this[bList].attachCountProperty(this, 'treeCount')
 }

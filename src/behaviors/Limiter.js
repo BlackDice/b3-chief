@@ -25,7 +25,7 @@ const compilation = {
 		}
 		if (maxLoop < minimumMaxLoop) {
 			throw new Error(
-				`Limiter.maxLoop must be at least ${minimumMaxLoop}, got: ${maxLoop}`
+				`Limiter.maxLoop must be at least ${minimumMaxLoop}, got: ${maxLoop}`,
 			)
 		}
 	},

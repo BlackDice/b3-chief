@@ -69,8 +69,8 @@ function removeChildNode(childNodeId) {
 	const children = this.getNodeChildren(parentId)
 	let index = 0
 
-	for (const child of children) {
-		child.changeChildIndex(index)
+	for (let i = 0, len = children.length; i < len; i += 1) {
+		children[i].changeChildIndex(index)
 		index += 1
 	}
 }

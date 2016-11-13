@@ -29,7 +29,7 @@ const BehaviorList = compose(
 			getBehaviorByName,
 			listBehaviors,
 		},
-	}
+	},
 )
 
 const bList = Symbol('list of behaviors')
@@ -37,7 +37,7 @@ const bList = Symbol('list of behaviors')
 function initializeBehaviorList() {
 	this[bList] = setupModelList(
 		setupBehaviorModel(this),
-		this.store.select(this.store.selectors.behaviors)
+		this.store.select(this.store.selectors.behaviors),
 	)
 	this[bList].attachCountProperty(this, 'behaviorCount')
 }

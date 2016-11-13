@@ -25,7 +25,7 @@ const compilation = {
 		}
 		if (maxTime < minimumMaxTime) {
 			throw new Error(
-				`MaxTime.maxTime must be at least ${minimumMaxTime}, got: ${maxTime}`
+				`MaxTime.maxTime must be at least ${minimumMaxTime}, got: ${maxTime}`,
 			)
 		}
 	},

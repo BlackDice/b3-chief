@@ -12,7 +12,7 @@ function initializeStore({ providerMap, preloadedState }) {
 		preloadedState,
 		actionType: createActionType(actionCreators),
 		reducer: createCheckedReducer(
-			combineReducers(reducerMap), stateType
+			combineReducers(reducerMap), stateType,
 		),
 	})
 
@@ -120,7 +120,7 @@ function createActionType(actionCreators) {
 
 function setupStore({ actionType, reducer, preloadedState }) {
 	const enhancer = createStoreEnhancer(
-		createStoreMiddleware(actionType)
+		createStoreMiddleware(actionType),
 	)
 	return createStore(reducer, preloadedState, enhancer)
 }
@@ -136,7 +136,7 @@ function createStoreEnhancer(middleware) {
 	const devTools = loadDevTools()
 	if (t.Function.is(devTools)) {
 		return compose(
-			middleware, devTools()
+			middleware, devTools(),
 		)
 	}
 	return middleware
