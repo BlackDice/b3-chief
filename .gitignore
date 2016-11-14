@@ -1,8 +1,9 @@
 node_modules
-.DS_Store
-desktop.ini
-npm-debug.log
+dist
+
+yarn*
+npm*
 
 .nyc_output
 coverage
-dist
+
