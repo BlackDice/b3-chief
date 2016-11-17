@@ -31,7 +31,7 @@
   "dependencies": {
     "common-tags": "1.4.0",
     "debug": "2.3.2",
-    "invariant": "2.2.1",
+    "invariant": "2.2.2",
     "keymirror": "0.1.1",
     "lodash.upperfirst": "4.3.1",
     "redux": "3.6.0",
@@ -55,7 +55,7 @@
     "babel-register": "6.18.0",
     "buble": "0.14.2",
     "coveralls": "2.11.15",
-    "eslint": "3.10.1",
+    "eslint": "3.10.2",
     "eslint-config-blackdice": "^0.1.1",
     "eslint-plugin-ava": "4.0.0",
     "eslint-plugin-babel": "3.3.0",
