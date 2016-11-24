@@ -50,6 +50,14 @@ test('get(key) returns value of the memory by key', (t) => {
 	t.is(actual, expected)
 })
 
+test('get(key) returns null for non-existing key', (t) => {
+	const { getMemory } = t.context
+	const memory = getMemory('TestGamaSubject')
+	const expected = null
+	const actual = memory.get('missing')
+	t.is(actual, expected)
+})
+
 test('set() is expecting key to set', (t) => {
 	const { getMemory } = t.context
 	const memory = getMemory('TestBetaSubject')
@@ -63,4 +71,12 @@ test('set() sets the value of memory by key', (t) => {
 	memory.set('testKey', expected)
 	const actual = memory.get('testKey')
 	t.is(actual, expected)
+})
+
+test('unset() removes value of memory by key', (t) => {
+	const { getMemory } = t.context
+	const memory = getMemory('TestBetaSubject')
+	memory.unset('number')
+	const actual = memory.get('number')
+	t.is(actual, null)
 })
