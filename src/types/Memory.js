@@ -6,6 +6,7 @@ const Memory = t.declare('Memory')
 const MemoryValue = t.declare('MemoryValue')
 
 MemoryValue.define(t.union([
+	Memory,
 	t.String,
 	t.Boolean,
 	t.Number,
