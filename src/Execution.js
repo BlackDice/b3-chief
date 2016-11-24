@@ -156,7 +156,7 @@ function executeTick({ node, compilation }, executionContext, executionTick) {
 function executeClose({ node, compilation }, executionContext) {
 	log('closing node %s...', node)
 	const result = executeCompilation(compilation, 'onClose', executionContext)
-	executionContext.memory.set(isNodeOpenMemoryTag, false)
+	executionContext.memory.unset(isNodeOpenMemoryTag)
 	return result
 }
 
