@@ -9,6 +9,7 @@ test('getSubjectMemory() returns memory of a subject', (t) => {
 		number: 10,
 		string: 'foo',
 		boolean: true,
+		array: [20, 'bar', false],
 	}
 	const memory = subject.getSubjectMemory()
 	t.is(memory.memoryId, 'TestBetaSubject')

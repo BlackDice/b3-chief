@@ -37,6 +37,7 @@ test('get() returns whole memory data', (t) => {
 		number: 10,
 		string: 'foo',
 		boolean: true,
+		array: [20, 'bar', false],
 	}
 	const actual = memory.get()
 	t.deepEqual(actual, expected)

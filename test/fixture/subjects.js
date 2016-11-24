@@ -14,6 +14,7 @@ export default () => ({
 					number: 10,
 					string: 'foo',
 					boolean: true,
+					array: [20, 'bar', false],
 				},
 			},
 		},
