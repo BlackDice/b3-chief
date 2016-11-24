@@ -85,6 +85,27 @@ test('setMemory sets subject memory by specified id', (t) => {
 	t.is(subject.memories.OtherSubjectMemory.otherTestKey, 'otherTestValue')
 })
 
+test('unsetMemory clear subject memory by specified id', (t) => {
+	const { store, selectOne } = t.context
+	store.actions.setMemory({
+		subjectId: 'TestAlphaSubject',
+		memoryId: 'TestAlphaSubject',
+		key: 'testKey',
+		value: 'testValue',
+	})
+	store.actions.unsetMemory({
+		subjectId: 'TestAlphaSubject',
+		memoryId: 'TestAlphaSubject',
+		key: 'testKey',
+	})
+
+	const subject = selectOne('TestAlphaSubject')
+	t.truthy(subject.memories)
+
+	t.truthy(subject.memories.TestAlphaSubject)
+	t.falsy(subject.memories.TestAlphaSubject.testKey)
+})
+
 test('removeMemory clears specified memory of subject', (t) => {
 	const { store, selectOne } = t.context
 	store.actions.setMemory({

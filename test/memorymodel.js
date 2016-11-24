@@ -37,6 +37,7 @@ test('get() returns whole memory data', (t) => {
 		number: 10,
 		string: 'foo',
 		boolean: true,
+		array: [20, 'bar', false],
 	}
 	const actual = memory.get()
 	t.deepEqual(actual, expected)
@@ -47,6 +48,14 @@ test('get(key) returns value of the memory by key', (t) => {
 	const memory = getMemory('TestBetaSubject')
 	const expected = 'foo'
 	const actual = memory.get('string')
+	t.is(actual, expected)
+})
+
+test('get(key) returns null for non-existing key', (t) => {
+	const { getMemory } = t.context
+	const memory = getMemory('TestGamaSubject')
+	const expected = null
+	const actual = memory.get('missing')
 	t.is(actual, expected)
 })
 
@@ -63,4 +72,12 @@ test('set() sets the value of memory by key', (t) => {
 	memory.set('testKey', expected)
 	const actual = memory.get('testKey')
 	t.is(actual, expected)
+})
+
+test('unset() removes value of memory by key', (t) => {
+	const { getMemory } = t.context
+	const memory = getMemory('TestBetaSubject')
+	memory.unset('number')
+	const actual = memory.get('number')
+	t.is(actual, null)
 })

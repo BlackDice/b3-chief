@@ -20,6 +20,11 @@ export const actions = {
 		key: MemoryKey,
 		value: MemoryValue,
 	}),
+	unsetMemory: t.interface({
+		subjectId: Identity,
+		memoryId: Identity,
+		key: MemoryKey,
+	}),
 	removeMemory: t.interface({
 		subjectId: Identity,
 		memoryId: Identity,
@@ -51,6 +56,16 @@ export const reducers = {
 				applySubjectMemory(subject, memoryId, key, value)
 			) },
 		})
+	},
+	unsetMemory(state, { payload: { subjectId, memoryId, key }}) {
+		if (state[subjectId] && state[subjectId].memories && state[subjectId].memories[memoryId]) {
+			return t.update(state, {
+				[subjectId]: { memories: { [memoryId]: {
+					$remove: [key],
+				}}},
+			})
+		}
+		return state
 	},
 	removeMemory(state, { payload: { subjectId, memoryId }}) {
 		if (state[subjectId] && state[subjectId].memories) {

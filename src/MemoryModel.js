@@ -38,7 +38,7 @@ function initializeMemoryModel({ store, subjectId, memoryId }) {
 		if (key === undefined) {
 			return memory
 		}
-		return memory[key]
+		return memory[key] || null
 	}
 
 	this.set = (key: MemoryKey, value: MemoryValue) => {
@@ -47,6 +47,14 @@ function initializeMemoryModel({ store, subjectId, memoryId }) {
 			memoryId,
 			key,
 			value,
+		})
+	}
+
+	this.unset = (key: MemoryKey) => {
+		store.actions.unsetMemory({
+			subjectId,
+			memoryId,
+			key,
 		})
 	}
 
