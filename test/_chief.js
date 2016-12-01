@@ -10,7 +10,7 @@ test.beforeEach((t) => {
 		preloadedState: stateFixture(),
 		transpiler(code) {
 			return transform(code, {
-				target: { node: process.version.substring(1, 2) },
+				target: { node: Math.min(6, process.version.substring(1, 2)) },
 				transforms: { dangerousForOf: true },
 			}).code
 		},
