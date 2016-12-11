@@ -165,11 +165,18 @@ function executeExit({ node, compilation }, executionContext) {
 	return executeCompilation(compilation, 'onExit', executionContext)
 }
 
-function executeCompilation(compilation, methodName, ...args) {
+function executeCompilation(compilation, methodName, arg1, arg2) {
+	if (process.env.NODE_ENV === 'production') {
+		return compilation[methodName](arg1, arg2)
+	}
+	return executeCompilationSafe(compilation, methodName, arg1, arg2)
+}
+
+function executeCompilationSafe(compilation, methodName, arg1, arg2) {
 	try {
-		return Reflect.apply(compilation[methodName], compilation, args)
+		return compilation[methodName](arg1, arg2)
 	} catch (err) {
-		const [executionContext] = args
+		const executionContext = arg1
 		return executionContext.error(
 			err, 'failed to execute method %s on %s', methodName, compilation.behavior,
 		)
@@ -275,10 +282,10 @@ const executionTickByBehaviorType = {
 	[BEHAVIOR_TYPE.SUBTREE]: createSubtreeExecutionTick,
 }
 
-function createExecutionTick(executionNode, ...args) {
+function createExecutionTick(executionNode, executeNode, toolbox) {
 	const factoryFunction = executionTickByBehaviorType[executionNode.type]
 	if (factoryFunction !== undefined) {
-		return factoryFunction(executionNode, ...args)
+		return factoryFunction(executionNode, executeNode, toolbox)
 	}
 	return {}
 }
