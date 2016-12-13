@@ -6,11 +6,11 @@ function createObjectCache(factory, getCacheKey = cacheIdentity) {
 		: new Map()
 	)
 
-	const getOrCreateCacheItem = (cacheObject, ...args) => {
+	const getOrCreateCacheItem = (cacheObject, arg1, arg2, arg3) => {
 		const cacheKey = getCacheKey(cacheObject)
 		let cacheItem = cache.get(cacheKey)
 		if (cacheItem === undefined) {
-			cacheItem = factory(cacheObject, ...args)
+			cacheItem = factory(cacheObject, arg1, arg2, arg3)
 			cache.set(cacheKey, cacheItem)
 		}
 		return cacheItem
