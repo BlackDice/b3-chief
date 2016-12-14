@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "common-tags": "1.4.0",
-    "debug": "2.3.3",
+    "debug": "2.4.0",
     "invariant": "2.2.2",
     "keymirror": "0.1.1",
     "lodash.upperfirst": "4.3.1",
