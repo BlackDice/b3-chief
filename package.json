@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "common-tags": "1.4.0",
-    "debug": "2.4.1",
+    "debug": "2.4.4",
     "invariant": "2.2.2",
     "keymirror": "0.1.1",
     "lodash.upperfirst": "4.3.1",
@@ -65,7 +65,7 @@
     "publish-please": "2.2.0",
     "rollup": "0.37.0",
     "rollup-plugin-babel": "2.7.1",
-    "rollup-plugin-commonjs": "5.0.5",
+    "rollup-plugin-commonjs": "6.0.0",
     "rollup-plugin-node-resolve": "2.0.0",
     "rollup-plugin-replace": "1.1.1",
     "rollup-plugin-uglify": "1.0.1"
