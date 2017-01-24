@@ -55,7 +55,7 @@
     "babel-register": "^6.18.0",
     "buble": "^0.15.0",
     "coveralls": "^2.11.15",
-    "eslint": "^3.12.2",
+    "eslint": "^3.14.0",
     "eslint-config-blackdice": "^0.1.1",
     "eslint-plugin-ava": "^4.0.0",
     "eslint-plugin-babel": "^4.0.0",
