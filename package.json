@@ -71,7 +71,7 @@
     "rollup-plugin-uglify": "^1.0.1"
   },
   "optionalDependencies": {
-    "remote-redux-devtools": "0.5.7"
+    "remote-redux-devtools": "0.5.8"
   },
   "ava": {
     "require": [
